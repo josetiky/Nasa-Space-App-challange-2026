@@ -61,6 +61,16 @@ The build uses Nitro. `@lovable.dev/vite-tanstack-config` targets Cloudflare by 
 
 Purely static hosting still works: Trek tiles, REMS, traverses and the NASA Images API allow browser CORS, and MOLA and DONKI can come from snapshots.
 
+### Netlify
+
+`netlify.toml` is ready: Netlify runs `npm run data:fetch` (snapshots; a failure does not stop the build) and then `npm run build` with `NITRO_PRESET=netlify`. The static site goes to `dist/` and SSR plus the `/api/nasa/*` routes run as one Netlify Function. Steps:
+
+1. In Netlify: **Add new project → Import an existing project → GitHub**, pick the repository and the branch to publish. Build settings come from `netlify.toml`.
+2. Optional environment variables (Site configuration → Environment variables): `NASA_API_KEY` (otherwise DONKI uses the rate-limited `DEMO_KEY`) and `GEMINI_API_KEY` (optional narration).
+3. Every push to the chosen branch redeploys the site.
+
+To check the Netlify build locally: `NITRO_PRESET=netlify npm run build` (outputs `dist/` and `.netlify/functions-internal/server/`).
+
 ## Troubleshooting
 
 | Symptom | Cause and fix |

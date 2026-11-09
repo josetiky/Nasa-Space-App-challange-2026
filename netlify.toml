@@ -1,0 +1,12 @@
+# Netlify deployment.
+# Nitro's Netlify preset puts the static site in dist/ and the server (SSR + /api/nasa/* proxies)
+# in one function under .netlify/functions-internal/. The NASA snapshot step lets the deployed app
+# keep working when a NASA endpoint is down; if it fails, the build still continues and the app
+# falls back to the live sources.
+[build]
+  command = "npm run data:fetch || echo 'NASA snapshot download incomplete: the app will use live sources'; npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NITRO_PRESET = "netlify"

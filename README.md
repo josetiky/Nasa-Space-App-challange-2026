@@ -13,7 +13,7 @@ MARS // SURVIVE is a mission-control web app for planning a human Mars mission. 
 | Module | Route | What it does |
 | --- | --- | --- |
 | Overview | `/` | Mission status, live Curiosity REMS weather, Mars24 clock, entry points |
-| Mars Explorer | `/explorer` | 3D globe (NASA Trek Viking mosaic over MOLA relief, real-time sunlight); EVA route planning on **real Curiosity terrain** in Gale crater (Access Mars), with a **safe-route planner** (A* that avoids slopes ≥ 15° and never crosses ≥ 25°) and a **helmet-visor HUD** that walks the route in first person; legacy regional models |
+| Mars Explorer | `/explorer` | 3D globe (NASA Trek Viking mosaic over MOLA relief, real-time sunlight); EVA route planning on **real Curiosity terrain** in Gale crater (Access Mars), with a **safe-route planner** (A* that avoids slopes ≥ 15° and never crosses ≥ 25°) and a **helmet-visor HUD** that walks the route in first person; a **boxwork Marswalk** along Curiosity's real 2025 path on Mount Sharp (HiRISE basemap, rover elevations and tilt, 8 science stops from the mission blog, EVA time/O₂/dose, saved to the mission); legacy regional models |
 | Survival Atlas | `/atlas` | Leaflet map on NASA Trek tiles with **10 layers** (elevation, slope, temperature, radiation, dust, water ice, resources, landing zones, hazards, routes). Each layer shows its legend, unit, source, period, resolution and data type. Analyse any location and compare up to 3 sites |
 | Mission Planner | `/planner` | Crew, habitat, power, supplies, ISRU, EVA programme, scenario and risk posture. zod validation, BVAD-based supply sizing, sol-1 energy budget and a 12-seed feasibility preview |
 | Mission Simulator | `/simulator` | Sol-by-sol O₂, water, food, energy, health, morale, habitat temperature, systems and dose, with 10 seeded event types, actions per event, history charts, a live protocol monitor and the mission log |
@@ -23,7 +23,7 @@ MARS // SURVIVE is a mission-control web app for planning a human Mars mission. 
 
 The original reference pages (Hazard Layers, Resources, Survival Protocols, Mission Lab, Sol by Sol) are still available from the sidebar.
 
-The catalogue includes the **Mount Sharp boxwork** ridges the challenge cites as an example. Curiosity studied them up close in 2025 (sols 4536–4723), and the site is placed at the centroid of the rover's real MMGIS waypoints.
+The catalogue includes the **Mount Sharp boxwork** ridges the challenge cites as an example. Curiosity studied them up close from May 2025 into 2026 (campaign sols 4534–4805). The site sits at the centroid of the rover's real MMGIS waypoints, and the Explorer's **Boxwork EVA** mode turns the rover's 2025 path into a Marswalk.
 
 ## Data honesty
 

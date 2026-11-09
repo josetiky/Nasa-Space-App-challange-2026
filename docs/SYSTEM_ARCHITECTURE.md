@@ -42,10 +42,10 @@ src/
   core/                  pure, framework-free, unit-tested
     types.ts             shared domain types (plans, environment, sim state, analyses, reports)
     rng.ts               mulberry32 + hashed sub-streams (common random numbers)
-    science/             constants, geo, marsTime, insolation, environment, terrain, regions, habitability, eva
+    science/             constants, geo, marsTime, insolation, environment, terrain, regions, habitability, eva, evaWalk, routing (A*), roverTraverse
     sim/                 config (scenarios, rates, thresholds), events, resources, engine, outcome, planning, fixtures
     decision/            criteria + posture weights, rules, engine (analyzeDecision), explain
-  data/                  static registries: sites (14), layers (10), sources, evaSites (Access Mars)
+  data/                  static registries: sites, layers (10), sources, evaSites (Access Mars), boxwork (Curiosity 2025 waypoints + stops)
   services/
     nasa/                http helpers, transform (pure), adapters (client), hooks (React Query)
     atlas/rasters.ts     layer fields from MOLA + models, colourisation, readouts
@@ -59,7 +59,7 @@ src/
     shell/AppShell.tsx   sidebar, Mars clock, data links, flow stepper, footer
     mission/             UI kit (badges, panels, metrics), effect/protocol helpers
     atlas/               Leaflet map + raster image cache
-    explorer/            Globe (R3F) and SurfaceEva (Access Mars terrain)
+    explorer/            Globe (R3F), SurfaceEva (Access Mars terrain + HUD), BoxworkTraverse (Leaflet + HiRISE)
     …legacy components   MarsExplorer, NasaDataAtlas, SurvivalSimulator, … (kept)
   routes/                file routes; api/ holds server routes
 scripts/fetch-nasa-data.ts   offline snapshot downloader (npm run data:fetch)

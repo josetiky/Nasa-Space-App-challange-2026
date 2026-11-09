@@ -2,7 +2,7 @@
  * NASA (and partner) data-source registry shown in the NASA Data Center.
  * Status values are filled at runtime by the adapters in src/services/nasa.
  */
-export type SourceId = "mola" | "trek" | "rems" | "traverses" | "donki" | "imagery" | "accessMars" | "openData" | "roverPhotos" | "insight";
+export type SourceId = "mola" | "trek" | "hirise" | "rems" | "traverses" | "donki" | "imagery" | "accessMars" | "openData" | "roverPhotos" | "insight";
 
 export interface DataSource {
   id: SourceId;
@@ -71,12 +71,12 @@ export const DATA_SOURCES: DataSource[] = [
     name: "Rover traverses (MMGIS)",
     provider: "NASA/JPL-Caltech MMGIS",
     mission: "Mars 2020 Perseverance · MSL Curiosity",
-    endpoint: "https://mars.nasa.gov/mmgis-maps/{M20|MSL}/Layers/json/{M20_traverse|M20_waypoints|MSL_traverse}.json",
+    endpoint: "https://mars.nasa.gov/mmgis-maps/{M20|MSL}/Layers/json/{M20_traverse|M20_waypoints|MSL_traverse|MSL_waypoints}.json",
     format: "GeoJSON (LineString / MultiLineString / Point)",
     access: "Public HTTPS with CORS",
     terms: "NASA/JPL public data",
-    usedFor: ["Exploration-routes layer", "Real context for planned EVAs"],
-    limitations: ["Localisation updates can lag the latest drives", "Simplified for display (Douglas–Peucker ~1 m)"],
+    usedFor: ["Exploration-routes layer", "Real context for planned EVAs", "Boxwork Marswalk: 62 Curiosity waypoints (position, elevation, tilt, odometry), sols 4530–4711, bundled in src/data/boxwork.ts"],
+    limitations: ["Localisation updates can lag the latest drives", "Simplified for display (Douglas–Peucker ~1 m)", "Waypoint elevations over short legs amplify localisation errors (grades are labelled as derived)"],
     snapshot: "/data/nasa/traverses/",
     integration: "live+snapshot",
     docs: "https://mars.nasa.gov/maps/location/?mission=M20",
@@ -105,10 +105,24 @@ export const DATA_SOURCES: DataSource[] = [
     format: "JSON (Collection+JSON)",
     access: "Public HTTPS with CORS, no key",
     terms: "Generally not copyrighted; check each item's credit",
-    usedFor: ["Point-of-view and orbital images for the selected site"],
+    usedFor: ["Point-of-view and orbital images for the selected site", "Rover images of boxwork stops (PIA26558, PIA26559 assets)"],
     limitations: ["Keyword search — results are not georeferenced"],
     integration: "live",
     docs: "https://images.nasa.gov/docs/images.nasa.gov_api_docs.pdf",
+  },
+  {
+    id: "hirise",
+    name: "HiRISE Curiosity roving-site mosaic",
+    provider: "NASA Solar System Treks (JPL) · HiRISE: NASA/JPL/University of Arizona",
+    mission: "Mars Reconnaissance Orbiter · HiRISE",
+    endpoint: "https://trek.nasa.gov/tiles/Mars/EQ/curiosity_hirise_mosaic/1.0.0/default/default028mm/{z}/{row}/{col}.png",
+    format: "OGC WMTS PNG tiles, equirectangular; zoom ≤ 16 (≈0.64 m per pixel)",
+    access: "Public HTTPS (tiles load as images, no key)",
+    terms: "NASA imagery; credit NASA/JPL/University of Arizona",
+    usedFor: ["Basemap of the boxwork Marswalk (Explorer → Boxwork EVA)"],
+    limitations: ["Covers 137.12–137.73°E, 4.25–4.93°S only", "Imagery only — no elevations", "Registration with rover waypoints is not guaranteed to the metre"],
+    integration: "live",
+    docs: "https://trek.nasa.gov/mars/",
   },
   {
     id: "accessMars",

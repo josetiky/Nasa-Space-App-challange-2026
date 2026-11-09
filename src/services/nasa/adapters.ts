@@ -25,6 +25,14 @@ export function trekTileUrl(layer: TrekLayerKey, z: number, row: number, col: nu
   return `${TREK_BASE}/${TREK_LAYERS[layer].id}/1.0.0/default/default028mm/${z}/${row}/${col}.jpg`;
 }
 
+/** Tile (row, column) containing a point at zoom z in Trek's equirectangular tiling (origin 90°N, 180°W). */
+export function trekTileIndex(z: number, lat: number, lon: number): { row: number; col: number } {
+  return { row: Math.floor(((90 - lat) / 180) * 2 ** z), col: Math.floor(((lon + 180) / 360) * 2 ** (z + 1)) };
+}
+
+/** HiRISE Curiosity roving-site mosaic on Trek (PNG tiles to zoom 16), used by the boxwork Marswalk. */
+export const HIRISE_GALE = { id: "curiosity_hirise_mosaic", probe: { lat: -4.8057, lon: 137.3802 } } as const;
+
 /** Leaflet template ({y} = row, {x} = column). */
 export function trekTemplate(layer: TrekLayerKey): string {
   return `${TREK_BASE}/${TREK_LAYERS[layer].id}/1.0.0/default/default028mm/{z}/{y}/{x}.jpg`;
@@ -211,6 +219,15 @@ export const HEALTH_CHECKS: Record<string, () => Promise<Omit<SourceHealth, "id"
       } catch {
         return { state: "offline", origin: null, detail: "Trek unreachable and no saved tiles", latencyMs: null };
       }
+    }
+  },
+  hirise: async () => {
+    const { row, col } = trekTileIndex(12, HIRISE_GALE.probe.lat, HIRISE_GALE.probe.lon);
+    try {
+      const { ms } = await timed(() => loadImage(`${TREK_BASE}/${HIRISE_GALE.id}/1.0.0/default/default028mm/12/${row}/${col}.png`, 10000));
+      return { state: "online", origin: "live", detail: `HiRISE tile 12/${row}/${col} over the boxwork loaded`, latencyMs: ms };
+    } catch {
+      return { state: "offline", origin: null, detail: "Trek HiRISE tiles unreachable", latencyMs: null };
     }
   },
   mola: async () => {

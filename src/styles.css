@@ -607,3 +607,25 @@ html.dark .mission-hero-planet-image {
 @media (prefers-reduced-motion: reduce) {
   .mission-module-card { transition: none; }
 }
+
+/* Boxwork traverse map: numbered science stops (Leaflet div icons). */
+.bw-stop {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--panel);
+  border: 2px solid var(--cyan);
+  color: var(--bright);
+  font: 600 10px/1 var(--font-mono);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.55);
+  cursor: pointer;
+}
+.bw-stop.bw-drill {
+  border-color: var(--amber);
+}
+.bw-stop.bw-sel {
+  background: var(--cyan);
+  color: #04131a;
+}

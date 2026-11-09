@@ -32,6 +32,14 @@ export interface EvaRouteInput {
   /** POI ids reached by the route and their science weight (0..1). */
   pois: Array<{ id: string; title: string; weight: number }>;
   crew?: number;
+  /**
+   * Optional path-length multiplier per segment (default 1): the walk follows a longer, winding path
+   * than the sampled geometry (e.g. measured rover odometry ÷ straight leg). Length, time and O₂ scale;
+   * the grade stays that of the sampled geometry, which is the steeper, conservative choice.
+   */
+  segmentLengthFactors?: number[];
+  /** Report per-segment slope hazards (default true); callers with better segment names can word their own. */
+  slopeHazards?: boolean;
 }
 
 export function computeEvaPlan(input: EvaRouteInput): EvaPlan {
@@ -54,6 +62,7 @@ export function computeEvaPlan(input: EvaRouteInput): EvaPlan {
     let segClimb = 0;
     let segMax = 0;
     let segMinutes = 0;
+    const factor = Math.max(1, input.segmentLengthFactors?.[index] ?? 1);
     for (let i = 1; i < samples.length; i += 1) {
       const a = samples[i - 1]!;
       const b = samples[i]!;
@@ -61,7 +70,7 @@ export function computeEvaPlan(input: EvaRouteInput): EvaPlan {
       if (horizontal < 1e-6) continue;
       const dy = b.y - a.y;
       const slope = (Math.atan2(Math.abs(dy), horizontal) * 180) / Math.PI;
-      const length = Math.hypot(horizontal, dy);
+      const length = Math.hypot(horizontal, dy) * factor;
       const minutes = (length / 1000 / walkingSpeedKmh(slope, dy > 0)) * 60;
       segDistance += length;
       segClimb += Math.max(0, dy);
@@ -70,6 +79,7 @@ export function computeEvaPlan(input: EvaRouteInput): EvaPlan {
       slopeWeighted += slope * length;
       o2 += oxygenForWork(metabolicRateW(slope), minutes) * crew;
       profile.push({ distanceM: total + segDistance, elevationM: b.y, slopeDeg: slope });
+      if (input.slopeHazards === false) continue;
       if (slope >= EVA.noGoSlopeDeg) hazards.add(`Segment ${index + 1}: slope ${slope.toFixed(0)}° exceeds the ${EVA.noGoSlopeDeg}° no-go threshold`);
       else if (slope >= EVA.cautionSlopeDeg) hazards.add(`Segment ${index + 1}: slope ${slope.toFixed(0)}° above the ${EVA.cautionSlopeDeg}° caution threshold`);
     }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Footprints, Globe2, Mountain, Navigation, Plus, Save, X } from "lucide-react";
+import { Footprints, Globe2, Mountain, Navigation, Plus, Route as RouteIcon, Save, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataBadge, Loading, Metric, Notice, btn, fmt, scoreTone } from "@/components/mission/ui";
@@ -15,13 +15,15 @@ import { cn } from "@/lib/utils";
 
 const Globe = lazy(() => import("@/components/explorer/Globe"));
 const SurfaceEva = lazy(() => import("@/components/explorer/SurfaceEva"));
+const BoxworkTraverse = lazy(() => import("@/components/explorer/BoxworkTraverse"));
 const LegacyExplorer = lazy(() => import("@/components/MarsExplorer").then((m) => ({ default: m.MarsExplorer })));
 
-type Mode = "globe" | "surface" | "regional";
+type Mode = "globe" | "surface" | "boxwork" | "regional";
+const MODES: readonly Mode[] = ["globe", "surface", "boxwork", "regional"];
 
 export const Route = createFileRoute("/explorer")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>): { mode?: Mode } => (search["mode"] === "surface" || search["mode"] === "regional" ? { mode: search["mode"] as Mode } : {}),
+  validateSearch: (search: Record<string, unknown>): { mode?: Mode } => (MODES.includes(search["mode"] as Mode) && search["mode"] !== "globe" ? { mode: search["mode"] as Mode } : {}),
   head: () => ({ meta: [{ title: "Mars Explorer — MARS // SURVIVE" }, { name: "description", content: "3D Mars globe on NASA Trek imagery and MOLA relief, with real Curiosity terrain for EVA planning." }] }),
   component: ExplorerPage,
 });
@@ -38,30 +40,41 @@ function ExplorerPage() {
   const setMode = (m: Mode) => void navigate({ to: "/explorer", search: m === "globe" ? {} : { mode: m }, replace: true });
   return (
     <div className="px-4 py-5 sm:px-6">
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="mb-4 flex flex-col gap-3 2xl:flex-row 2xl:items-end 2xl:justify-between">
         <div>
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[.24em] text-amber">Module 1 · Mars Explorer</p>
           <h1 className="mt-1 font-display text-3xl font-bold tracking-[-.03em]">Navigate Mars on real data</h1>
-          <p className="mt-1.5 max-w-3xl text-[13px] text-fog">Globe: NASA Trek Viking mosaic over MOLA relief, with real-time sunlight from the Mars24 clock. Surface: Curiosity's reconstructed terrain in Gale crater for EVA route planning.</p>
+          <p className="mt-1.5 max-w-3xl text-[13px] text-fog">Globe: NASA Trek Viking mosaic over MOLA relief, with real-time sunlight from the Mars24 clock. Surface: Curiosity's reconstructed terrain in Gale crater for EVA route planning. Boxwork: Curiosity's 2025 path on Mount Sharp over HiRISE imagery, as a Marswalk.</p>
         </div>
-        <div className="flex rounded-xl border border-line p-1" role="tablist" aria-label="Explorer mode">
+        <div className="flex max-w-full self-start overflow-x-auto rounded-xl border border-line p-1" role="tablist" aria-label="Explorer mode">
           {([
             ["globe", "Planetary globe", Globe2],
             ["surface", "Surface EVA · Gale", Footprints],
+            ["boxwork", "Boxwork EVA · 2025", RouteIcon],
             ["regional", "Regional models", Mountain],
           ] as const).map(([m, label, Icon]) => (
-            <button key={m} role="tab" aria-selected={mode === m} type="button" onClick={() => setMode(m)} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px]", mode === m ? "bg-amber/15 text-amber" : "text-fog hover:text-bright")}>
+            <button key={m} role="tab" aria-selected={mode === m} type="button" onClick={() => setMode(m)} className={cn("flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-[12px]", mode === m ? "bg-amber/15 text-amber" : "text-fog hover:text-bright")}>
               <Icon className="size-3.5" /> {label}
             </button>
           ))}
         </div>
       </div>
-      {mode === "globe" ? <GlobeMode onSurface={() => setMode("surface")} /> : mode === "surface" ? <SurfaceMode /> : <RegionalMode />}
+      {mode === "globe" ? (
+        <GlobeMode onSurface={() => setMode("surface")} onBoxwork={() => setMode("boxwork")} />
+      ) : mode === "surface" ? (
+        <SurfaceMode />
+      ) : mode === "boxwork" ? (
+        <Suspense fallback={<div className="grid h-[60vh] place-items-center"><Loading text="Loading the boxwork traverse…" /></div>}>
+          <BoxworkTraverse />
+        </Suspense>
+      ) : (
+        <RegionalMode />
+      )}
     </div>
   );
 }
 
-function GlobeMode({ onSurface }: { onSurface: () => void }) {
+function GlobeMode({ onSurface, onBoxwork }: { onSurface: () => void; onBoxwork: () => void }) {
   const { grid, state: gridState } = useGrid();
   const store = useMission();
   const [exaggeration, setExaggeration] = useState(12);
@@ -107,7 +120,7 @@ function GlobeMode({ onSurface }: { onSurface: () => void }) {
       </div>
 
       <aside className="space-y-4">
-        <SiteCard analysis={shown} isGale={isGale} onSurface={onSurface} />
+        <SiteCard analysis={shown} isGale={isGale} onSurface={onSurface} onBoxwork={onBoxwork} />
         <section className="rounded-2xl border border-line bg-panel/80 p-3">
           <p className="mb-2 px-1 font-mono text-[9.5px] uppercase tracking-[.2em] text-fog">Catalogue sites</p>
           <div className="grid max-h-56 grid-cols-1 gap-1 overflow-y-auto sm:grid-cols-2 xl:grid-cols-1">
@@ -133,7 +146,7 @@ function GlobeMode({ onSurface }: { onSurface: () => void }) {
   );
 }
 
-function SiteCard({ analysis, isGale, onSurface }: { analysis: LocationAnalysis | null; isGale: boolean; onSurface: () => void }) {
+function SiteCard({ analysis, isGale, onSurface, onBoxwork }: { analysis: LocationAnalysis | null; isGale: boolean; onSurface: () => void; onBoxwork: () => void }) {
   const navigate = useNavigate();
   const selectedId = useMission((s) => s.selectedSite?.id);
   if (!analysis)
@@ -189,6 +202,11 @@ function SiteCard({ analysis, isGale, onSurface }: { analysis: LocationAnalysis 
       {isGale ? (
         <button type="button" onClick={onSurface} className={cn(btn.secondary, "mt-2 w-full border-cyan/40 text-cyan")}>
           <Footprints className="size-3.5" /> Plan an EVA on Curiosity's real terrain
+        </button>
+      ) : null}
+      {analysis.site.id === "boxwork" ? (
+        <button type="button" onClick={onBoxwork} className={cn(btn.secondary, "mt-2 w-full border-amber/40 text-amber")}>
+          <RouteIcon className="size-3.5" /> Plan a Marswalk on Curiosity's boxwork path
         </button>
       ) : null}
     </section>

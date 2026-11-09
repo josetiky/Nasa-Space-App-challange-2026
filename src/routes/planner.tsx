@@ -298,7 +298,7 @@ function PlannerPage() {
                     </span>
                   </label>
                 ) : (
-                  <p className="rounded-lg border border-dashed border-line px-3 py-2 text-[12px] text-fog">No EVA route saved: the simulator uses a generic 3-hour EVA. Draw one on Curiosity's terrain in the Explorer.</p>
+                  <p className="rounded-lg border border-dashed border-line px-3 py-2 text-[12px] text-fog">No EVA route saved: the simulator uses a generic 3-hour EVA. Draw one on Curiosity's terrain or pick a stretch of its 2025 boxwork path in the Explorer.</p>
                 )}
               </Field>
             </div>

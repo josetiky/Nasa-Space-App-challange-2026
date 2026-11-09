@@ -20,7 +20,7 @@ All nine phases are implemented on branch `feature/intelligent-mission-control`:
 
 Known follow-ups:
 
-- Calibrate the temperature and pressure coefficients against the REMS record (`REMS_CALIBRATION.calibrated = false`).
+- ✅ Temperature and pressure calibrated against REMS (Gale, sols 1–4995). Next: latitudinal validation (Viking, Pathfinder, Phoenix, InSight records) and a polar-cap model.
 - Ship offline snapshots with the deployment (`npm run data:fetch`) so MOLA-based layers work on static hosts.
 - Higher-resolution topography (HRSC/CTX DEMs) for regional EVA planning outside the four Access Mars sites.
 - Optional: code-split the heaviest 3D chunks further and add a service worker for offline tiles.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RADIATION } from "./constants";
-import { backgroundTau, dailyTemperature, describeEnvironment, gcrDosePerSol, pressureAt, shieldingColumn } from "./environment";
+import { backgroundTau, dailyTemperature, describeEnvironment, gcrDosePerSol, pressureAt, REMS_CALIBRATION, shieldingColumn } from "./environment";
 import { distanceKm, greatCirclePoints, latLonToXYZ, normalizeLon, xyzToLatLon } from "./geo";
 import { analyzeLocation, scoreLocation } from "./habitability";
 import { dailyMeanToaInsolation, dustTransmission, heliocentricDistanceAU } from "./insolation";
@@ -70,7 +70,7 @@ describe("insolation and atmosphere", () => {
   });
 
   it("decreases pressure with elevation (scale height 11.1 km)", () => {
-    expect(pressureAt(-4450)).toBeCloseTo(845, 0);
+    expect(pressureAt(-4450)).toBeCloseTo(REMS_CALIBRATION.meanPressurePa, 6);
     expect(pressureAt(-4450 + 11100) / pressureAt(-4450)).toBeCloseTo(Math.exp(-1), 6);
     expect(shieldingColumn(850)).toBeCloseTo(850 / 3.71 / 10, 6);
   });

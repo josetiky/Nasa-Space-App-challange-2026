@@ -2,7 +2,7 @@
 
 All models live in `src/core` as pure, unit-tested TypeScript. Every constant is either sourced (with its reference in `src/core/science/constants.ts`) or marked **ASSUMPTION** in the code. Outputs are labelled MODELLED or SIMULATED in the UI.
 
-> **Calibration status.** The temperature and pressure coefficients are physically motivated first estimates. Fitting them against the REMS record (`REMS_CALIBRATION.calibrated = false`) is pending. Treat temperatures as indicative (±15 K).
+> **Calibration status.** Temperature and pressure are calibrated against Curiosity REMS at Gale: 36 solar-longitude bins (medians of sols 1–4995, 4,717 valid sols, retrieved 2026-11-09). Each sol is referred to −4450 m using the rover elevation from the MMGIS waypoints. Residuals: daily mean 0.72 K RMS, diurnal range 1.8 K RMS, pressure 0.40 % RMS (`src/core/science/calibration/`, enforced by `calibration.test.ts`). A single site constrains the seasonal cycle, not the latitudinal structure, whose coefficients remain assumptions (see §4).
 
 ## 1. Environment models (`src/core/science`)
 
@@ -10,9 +10,13 @@ All models live in `src/core` as pure, unit-tested TypeScript. Every constant is
 
 **Insolation.** Daily-mean top-of-atmosphere insolation from solar declination and heliocentric distance (Mars' orbital eccentricity, perihelion at Ls ≈ 251°), with S₀ = 1361 W/m² scaled by 1/r². Surface value = TOA × T(τ), with **T(τ) = exp(−0.45 τ)** (ASSUMPTION: global direct + diffuse transmission).
 
-**Pressure.** `P(z, Ls) = 845 Pa · exp(−(z + 4450 m)/11.1 km) · (1 + Σ seasonal harmonics)`. The reference is Gale at −4450 m; two harmonics give the CO₂ cycle.
+**Pressure.** `P(z, Ls) = 843.9 Pa · exp(−(z + 4450 m)/11.1 km) · (1 + Σ a_k cos kLs + b_k sin kLs)`, with fitted harmonics k = 1: (0.0537, −0.0352) and k = 2: (−0.0464, 0.0502). It reproduces REMS's seasonal CO₂ cycle at Gale (737 Pa at Ls ≈ 150°, 918 Pa at Ls ≈ 255°) to within 0.4 % RMS.
 
-**Temperature (daily mean).** `T̄ = −70 + 83·Q_TOA^¼ − 52·(lat/90)² − 1.5 K/km·(z + 4450 m)/1000 − 2·max(0, τ − 0.5)` K, floored at 148 K. The diurnal range is 72 K at τ = 0.5, compressed by dust as `exp(−0.22·(τ − 0.5))`. Annual means average 36 seasons. Rationale: daily means follow TOA forcing, and dust mainly compresses the diurnal cycle (Viking storm records).
+**Temperature (daily mean).** `T̄ = A + B·Q̄₄(lat) + Bs(lat)·(Q^¼ − Q̄₄(lat)) − 52·(lat/90)² − 1.5 K/km·(z + 4450 m)/1000 − 2·max(0, τ − 0.5)` K, floored at 148 K (CO₂ frost). Q is the daily-mean TOA insolation and Q̄₄ the annual mean of Q^¼ at that latitude, so the first terms set the annual-mean latitudinal structure and the third the seasonal cycle.
+- Fitted to REMS: A = −72.49 K and the tropical seasonal sensitivity Bs₀ = 43.73.
+- Assumptions: B = 83, the latitude term, and the blend `Bs(lat) = B − (B − Bs₀)·cos²(lat)`, under which seasons are damped in the tropics and approach equilibrium toward the poles.
+- Diurnal range: `R = 64.58 K · (Q/180 W/m²)^0.576 · exp(−0.22·max(0, τ − 0.5))`, with R₀ and the exponent fitted. REMS shows 54 K at aphelion and 71 K near perihelion.
+- Plausibility outside Gale: Phoenix summer comes out at −106…−40 °C (the lander measured roughly −95…−20 °C) and Viking 2 summer at −94…−29 °C.
 
 **Radiation (GCR).** `D = 0.64 mSv/day · (850 Pa / P)^0.25` per day, converted to per-sol. Anchored to MSL-RAD's surface dose equivalent at Gale (Hassler et al. 2014: 0.64 ± 0.12 mSv/day). The pressure exponent 0.25 is an ASSUMPTION representing extra shielding by a thicker column. Habitat shielding factors are also ASSUMPTIONS: surface 10 %, regolith-covered 40 %, lava tube 70 % dose reduction. Limits: NASA-STD-3001, 600 mSv career and 250 mSv per SPE. SEP multipliers: ×1 / ×4 / ×12 by severity.
 
@@ -89,7 +93,7 @@ Scenarios: *nominal*; *dust season* (storms ×2.5, power ×1.4, habitat ×1.3); 
 - One habitat node; no crew-member individuality; no resupply windows.
 - Event probabilities are planning assumptions, not measured hazard rates (except SEP frequency).
 - MOLA's 15 km cells cannot resolve rocks or small craters. EVA slopes therefore come from the Access Mars terrain mesh, which only covers four Gale sites.
-- Temperatures are a parametric model (calibration pending, see top).
+- Temperatures are calibrated at one site (Gale). Mid- and high-latitude winters run cold (the CO₂ frost floor is reached too easily; Viking 2's winter means were about −105 °C), and polar summers run warm because there is no polar-cap model (the residual caps stay near the frost point).
 
 ## References
 

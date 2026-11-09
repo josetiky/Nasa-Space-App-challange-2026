@@ -3,8 +3,10 @@
 # in one function under .netlify/functions-internal/. The NASA snapshot step lets the deployed app
 # keep working when a NASA endpoint is down; if it fails, the build still continues and the app
 # falls back to the live sources.
+# The repository also carries the original bun.lock (Lovable), which makes Netlify install with Bun;
+# `npm ci` then installs exactly the tested package-lock.json before building.
 [build]
-  command = "npm run data:fetch || echo 'NASA snapshot download incomplete: the app will use live sources'; npm run build"
+  command = "npm ci && { npm run data:fetch || echo 'NASA snapshot download incomplete: the app will use live sources'; } && npm run build"
   publish = "dist"
 
 [build.environment]

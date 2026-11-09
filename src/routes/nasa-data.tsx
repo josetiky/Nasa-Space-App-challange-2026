@@ -57,7 +57,7 @@ function NasaDataPage() {
         ))}
       </section>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {DATA_SOURCES.map((source) => (
           <SourceCard key={source.id} source={source} health={health[source.id]} onCheck={() => void check(source.id)} />
         ))}
@@ -87,8 +87,8 @@ function SourceCard({ source, health, onCheck }: { source: DataSource; health: S
   const integration = INTEGRATION_LABEL[source.integration];
   const checkable = source.integration !== "not-used" && source.integration !== "metadata";
   return (
-    <article className={cn("rounded-2xl border bg-panel/80 p-4", source.integration === "not-used" ? "border-line/60 opacity-75" : "border-line")}>
-      <div className="flex items-start justify-between gap-3">
+    <article className={cn("min-w-0 rounded-2xl border bg-panel/80 p-4", source.integration === "not-used" ? "border-line/60 opacity-75" : "border-line")}>
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
           <p className="font-mono text-[9.5px] uppercase tracking-[.16em] text-fog">{source.mission}</p>
           <h3 className="mt-0.5 font-display text-[15px] font-semibold text-bright">{source.name}</h3>
@@ -107,7 +107,7 @@ function SourceCard({ source, health, onCheck }: { source: DataSource; health: S
         <Row label="Limitations">{source.limitations.join(" · ")}</Row>
         {source.snapshot ? (
           <Row label="Snapshot">
-            <code className="text-[10.5px]">public{source.snapshot}</code>
+            <code className="break-all text-[10.5px]">public{source.snapshot}</code>
           </Row>
         ) : null}
       </dl>
@@ -136,7 +136,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[88px_1fr] gap-2">
       <dt className="font-mono text-[9.5px] uppercase tracking-[.12em] text-fog/80">{label}</dt>
-      <dd className="text-bright/90">{children}</dd>
+      <dd className="min-w-0 text-bright/90 [overflow-wrap:anywhere]">{children}</dd>
     </div>
   );
 }

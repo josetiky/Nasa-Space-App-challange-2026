@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Activity, ArrowRight, BrainCircuit, ClipboardList, CloudSun, Database, FileText, Footprints, Globe2, Layers, Play, Sparkles, Box } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { Guarded3D } from "@/components/mission/Guarded3D";
 import { DataBadge, Empty, FlowStepper, Loading, Metric, Panel, StatusPill, btn, fmt, scoreTone } from "@/components/mission/ui";
 import { localTrueSolarTime, formatHours, marsTimeFromDate, seasonName } from "@/core/science/marsTime";
 import { findCatalogueSite } from "@/data/sites";
@@ -145,12 +146,14 @@ function Index() {
             <div className="soft-card relative overflow-hidden rounded-[24px] p-3">
               <div className="relative aspect-[1.08/1] overflow-hidden rounded-[18px] bg-[#0b0806]">
                 <div className="absolute inset-0">
-                  <Canvas camera={{ position: [0, 0.15, 3.65], fov: 40 }} dpr={[1, 1.6]}>
-                    <Suspense fallback={null}>
-                      <HomeMarsGlobe />
-                    </Suspense>
-                    <OrbitControls enablePan={false} minDistance={2.55} maxDistance={4.8} autoRotate autoRotateSpeed={0.42} enableDamping dampingFactor={0.06} />
-                  </Canvas>
+                  <Guarded3D what="The 3D Mars globe">
+                    <Canvas camera={{ position: [0, 0.15, 3.65], fov: 40 }} dpr={[1, 1.6]}>
+                      <Suspense fallback={null}>
+                        <HomeMarsGlobe />
+                      </Suspense>
+                      <OrbitControls enablePan={false} minDistance={2.55} maxDistance={4.8} autoRotate autoRotateSpeed={0.42} enableDamping dampingFactor={0.06} />
+                    </Canvas>
+                  </Guarded3D>
                 </div>
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,transparent_0_30%,rgba(7,5,4,.08)_58%,rgba(7,5,4,.7)_100%)]" />
                 <ModelLoading />

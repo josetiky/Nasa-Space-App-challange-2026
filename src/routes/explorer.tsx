@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Footprints, Globe2, Mountain, Navigation, Plus, Route as RouteIcon, Save, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Guarded3D } from "@/components/mission/Guarded3D";
 import { DataBadge, Loading, Metric, Notice, btn, fmt, scoreTone } from "@/components/mission/ui";
 import type { TextureSource } from "@/components/explorer/Globe";
 import { distanceKm } from "@/core/science/geo";
@@ -96,7 +97,9 @@ function GlobeMode({ onSurface, onBoxwork }: { onSurface: () => void; onBoxwork:
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="relative h-[64vh] min-h-[440px] overflow-hidden rounded-2xl border border-line bg-black xl:h-[calc(100vh-200px)]">
         <Suspense fallback={<div className="grid h-full place-items-center"><Loading text="Starting 3D engine…" /></div>}>
-          <Globe grid={grid} exaggeration={exaggeration} realSun={realSun} hd={hd} selected={store.selectedSite?.point ?? null} probe={probe?.site.point ?? null} traverse={store.traverse} focus={focus} showLanders={landers} onPick={onPick} onHover={onHover} onTextureSource={onTextureSource} />
+          <Guarded3D what="The 3D globe">
+            <Globe grid={grid} exaggeration={exaggeration} realSun={realSun} hd={hd} selected={store.selectedSite?.point ?? null} probe={probe?.site.point ?? null} traverse={store.traverse} focus={focus} showLanders={landers} onPick={onPick} onHover={onHover} onTextureSource={onTextureSource} />
+          </Guarded3D>
         </Suspense>
         <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/65 px-3 py-2 font-mono text-[10.5px] text-white/85 backdrop-blur">
           <span className="text-white/60">Imagery:</span>
@@ -268,7 +271,9 @@ function SurfaceMode() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="relative h-[64vh] min-h-[440px] overflow-hidden rounded-2xl border border-line bg-black xl:h-[calc(100vh-260px)]">
           <Suspense fallback={<div className="grid h-full place-items-center"><Loading text="Loading terrain engine…" /></div>}>
-            <SurfaceEva key={site.id} site={site} initial={saved} onPlan={onPlan} onPoi={setPoi} activePoi={poi} />
+            <Guarded3D what="Curiosity's 3D terrain">
+              <SurfaceEva key={site.id} site={site} initial={saved} onPlan={onPlan} onPoi={setPoi} activePoi={poi} />
+            </Guarded3D>
           </Suspense>
           <p className="pointer-events-none absolute bottom-2 left-3 font-mono text-[9.5px] text-white/70">Terrain: NASA/JPL-Caltech (Curiosity Navcam/Mastcam stereo) via Access Mars · Google Creative Lab, Apache-2.0</p>
         </div>
@@ -361,7 +366,9 @@ function RegionalMode() {
         Regional 3D models from the original MARS // SURVIVE project. Use them for visual reference only: their site scores are demo values. The live analysis is in the globe and the Survival Atlas.
       </Notice>
       <Suspense fallback={<Loading text="Loading regional models…" />}>
-        <LegacyExplorer />
+        <Guarded3D what="The regional 3D models">
+          <LegacyExplorer />
+        </Guarded3D>
       </Suspense>
     </div>
   );

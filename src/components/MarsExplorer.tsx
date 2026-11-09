@@ -1,7 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Environment,
-  Html,
   Lightformer,
   Line,
   OrbitControls,
@@ -192,6 +191,41 @@ function positionFromCoordinates(latitude: number, longitude: number, radius = 1
   );
 }
 
+/** Selected-site label as a camera-facing canvas sprite (drei <Html> created a React root per label and raced unmounts). */
+function SiteNameSprite({ text }: { text: string }) {
+  const { texture, aspect } = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    const font = "600 36px ui-monospace, SFMono-Regular, Menlo, monospace";
+    ctx.font = font;
+    const label = text.toUpperCase();
+    const width = Math.ceil(ctx.measureText(label).width) + 40;
+    canvas.width = width;
+    canvas.height = 60;
+    ctx.font = font;
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.strokeStyle = "rgba(217,119,6,0.6)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(2, 2, width - 4, 56, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#b45309";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, 20, 32);
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return { texture: t, aspect: width / 60 };
+  }, [text]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  const height = 0.08;
+  return (
+    <sprite position={[0, 0.13, 0]} scale={[height * aspect, height, 1]} renderOrder={10}>
+      <spriteMaterial map={texture} depthTest={false} transparent />
+    </sprite>
+  );
+}
+
 /** In-scene loading placeholder (a drei <Html> fallback here raced React 19 unmounts: removeChild errors). */
 function ModelLoader() {
   const ref = useRef<THREE.Mesh>(null);
@@ -379,11 +413,7 @@ function LocationMarkers({
               </mesh>
             )}
             {selected && (
-              <Html distanceFactor={5} position={[0, 0.13, 0]}>
-                <div className="pointer-events-none rounded border border-amber/40 bg-white/95 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-amber shadow-2xl">
-                  {site.name}
-                </div>
-              </Html>
+              <SiteNameSprite text={site.name} />
             )}
           </group>
         );

@@ -23,6 +23,8 @@ MARS // SURVIVE is a mission-control web app for planning a human Mars mission. 
 
 The original reference pages (Hazard Layers, Resources, Survival Protocols, Mission Lab, Sol by Sol) are still available from the sidebar.
 
+The catalogue includes the **Mount Sharp boxwork** ridges the challenge cites as an example. Curiosity studied them up close in 2025 (sols 4536–4723), and the site is placed at the centroid of the rover's real MMGIS waypoints.
+
 ## Data honesty
 
 Every value carries one of four labels:

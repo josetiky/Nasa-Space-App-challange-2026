@@ -53,6 +53,12 @@ export function toLocalMetres(points: Array<{ lat: number; lon: number; elevatio
   return points.map((p) => ({ x: (p.lon - origin.lon) * metresPerDeg * cosLat, y: p.elevationM, z: (origin.lat - p.lat) * metresPerDeg }));
 }
 
+/** Inverse of toLocalMetres for one point. */
+export function fromLocalMetres(p: { x: number; z: number }, origin: { lat: number; lon: number }): { lat: number; lon: number } {
+  const metresPerDeg = MMGIS_SPHERE_RADIUS_M * DEG;
+  return { lat: origin.lat - p.z / metresPerDeg, lon: origin.lon + p.x / (metresPerDeg * Math.cos(origin.lat * DEG)) };
+}
+
 export interface RoverEvaOptions {
   fromSol: number;
   toSol: number;
@@ -76,6 +82,9 @@ export interface RoverEvaResult {
   steepStops: RoverWaypoint[];
   /** Science stops reached on the way out. */
   stops: TraverseStop[];
+  /** Straight legs between consecutive plan waypoints (local metres) and their path-length factors. */
+  segmentSamples: Array<Array<{ x: number; y: number; z: number }>>;
+  segmentLengthFactors: number[];
 }
 
 function indexOfSol(all: RoverWaypoint[], sol: number): number {
@@ -113,11 +122,12 @@ export function planRoverTraverseEva(all: RoverWaypoint[], stops: TraverseStop[]
   }
 
   const visited = outbound.map((w) => stopBySol.get(w.sol)).filter((s): s is TraverseStop => !!s);
+  const segmentSamples = waypoints.slice(1).map((b, k) => [waypoints[k]!, b]);
   const base = computeEvaPlan({
     siteId: opts.siteId ?? "rover-traverse",
     siteName: opts.siteName ?? "Rover traverse",
     waypoints,
-    segmentSamples: waypoints.slice(1).map((b, k) => [waypoints[k]!, b]),
+    segmentSamples,
     pois: visited.map((s) => ({ id: s.id, title: s.title, weight: s.weight })),
     crew: opts.crew ?? 2,
     segmentLengthFactors: factors,
@@ -152,5 +162,7 @@ export function planRoverTraverseEva(all: RoverWaypoint[], stops: TraverseStop[]
     maxTiltDeg: Math.max(...outbound.map((w) => w.tiltDeg)),
     steepStops,
     stops: visited,
+    segmentSamples,
+    segmentLengthFactors: factors,
   };
 }

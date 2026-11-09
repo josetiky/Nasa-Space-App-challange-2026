@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeEvaPlan } from "./eva";
-import { buildWalkTimeline, sampleWalk } from "./evaWalk";
+import { arrivalMinutes, buildWalkTimeline, sampleWalk } from "./evaWalk";
 
 const waypoints = [
   { id: "a", x: 0, y: 0, z: 0 },
@@ -46,5 +46,32 @@ describe("EVA walk timeline (HUD)", () => {
     const climbing = sampleWalk(timeline, timeline.totalMinutes - 1);
     expect(climbing.slopeDeg).toBeCloseTo((Math.atan2(6, 40) * 180) / Math.PI, 3);
     expect(climbing.nextLabel).toBe("Waypoint 3");
+  });
+});
+
+describe("EVA walk timeline with path-length factors", () => {
+  const flat = [
+    { id: "a", x: 0, y: 0, z: 0 },
+    { id: "b", x: 100, y: 0, z: 0, poiId: "rock" },
+    { id: "c", x: 100, y: 0, z: 50 },
+  ];
+  const legs = [[flat[0]!, flat[1]!], [flat[1]!, flat[2]!]];
+  const stops = [{ id: "rock", title: "Rock", weight: 1 }];
+  const factors = [2, 1];
+  const plan = computeEvaPlan({ siteId: "t", siteName: "T", waypoints: flat, segmentSamples: legs, pois: stops, crew: 2, segmentLengthFactors: factors });
+  const timeline = buildWalkTimeline(legs, flat, stops, 2, factors);
+
+  it("stretches each leg like the plan does, so the totals still agree", () => {
+    expect(timeline.totalDistanceM).toBeCloseTo(250, 6);
+    expect(timeline.totalDistanceM).toBeCloseTo(plan.distanceM, 6);
+    expect(timeline.totalMinutes).toBeCloseTo(plan.durationMin, 6);
+    expect(timeline.frames.at(-1)!.o2Kg).toBeCloseTo(plan.o2Kg, 6);
+  });
+
+  it("reports when each waypoint is reached (arrival, before any science stop)", () => {
+    expect(arrivalMinutes(timeline, 0)).toBe(0);
+    const walk1 = timeline.frames.find((f) => f.stop === "Rock")!.minutes;
+    expect(arrivalMinutes(timeline, 1)).toBeCloseTo(walk1, 9);
+    expect(arrivalMinutes(timeline, 2)).toBeCloseTo(timeline.totalMinutes, 9);
   });
 });

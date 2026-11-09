@@ -1,7 +1,7 @@
 import "leaflet/dist/leaflet.css";
 import { Link } from "@tanstack/react-router";
 import type * as Leaflet from "leaflet";
-import { ExternalLink, Flag, MapPin, Save, X } from "lucide-react";
+import { Download, ExternalLink, Flag, MapPin, Pause, Play, Save, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
@@ -23,7 +23,17 @@ import {
   pressureAt,
 } from "@/core/science/environment";
 import { formatHours, localTrueSolarTime, marsTimeFromDate } from "@/core/science/marsTime";
-import { MMGIS_SPHERE_RADIUS_M, type RoverWaypoint } from "@/core/science/roverTraverse";
+import {
+  buildWalkTimeline,
+  sampleWalk,
+  type WalkState,
+  type WalkTimeline,
+} from "@/core/science/evaWalk";
+import {
+  fromLocalMetres,
+  MMGIS_SPHERE_RADIUS_M,
+  type RoverWaypoint,
+} from "@/core/science/roverTraverse";
 import type { EvaPlan } from "@/core/types";
 import {
   BOXWORK_CONTEXT,
@@ -37,6 +47,8 @@ import {
 import { findCatalogueSite } from "@/data/sites";
 import { cn } from "@/lib/utils";
 import { analyzeSite, useGrid } from "@/services/analysis";
+import { buildEvaCard, evaMilestones, formatMissionTime, type Milestone } from "@/services/evaCard";
+import { downloadText } from "@/services/reportExport";
 import { dispatchMission, useMission } from "@/state/missionStore";
 
 /* Colours for Leaflet SVG paths (SVG attributes cannot read CSS variables). */
@@ -123,9 +135,66 @@ export default function BoxworkTraverse() {
   const meanElevation =
     result.outbound.reduce((s, w) => s + w.elevationM, 0) / result.outbound.length;
 
+  // Walk replay: the same timeline accounting as the plan (odometry-stretched legs, 20-min stops).
+  const timeline = useMemo(
+    () =>
+      buildWalkTimeline(
+        result.segmentSamples,
+        plan.waypoints,
+        result.stops,
+        crew,
+        result.segmentLengthFactors,
+      ),
+    [result, plan, crew],
+  );
+  const milestones = useMemo(
+    () => evaMilestones(result, timeline, sel.returnToStart, BOXWORK_STOPS),
+    [result, timeline, sel.returnToStart],
+  );
+  const [replay, setReplay] = useState<{ t: number; playing: boolean; speed: number } | null>(null);
+  const mapBox = useRef<HTMLDivElement>(null);
+  useEffect(() => setReplay(null), [result]);
+  useEffect(() => {
+    if (!replay?.playing) return;
+    let frame = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.25, (now - last) / 1000);
+      last = now;
+      setReplay((r) => {
+        if (!r || !r.playing) return r;
+        const t = Math.min(timeline.totalMinutes, r.t + dt * r.speed);
+        return { ...r, t, playing: t < timeline.totalMinutes };
+      });
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [replay?.playing, timeline]);
+  const walk = replay ? sampleWalk(timeline, replay.t) : null;
+  const walker = walk
+    ? fromLocalMetres({ x: walk.position[0], z: walk.position[2] }, result.outbound[0]!)
+    : null;
+  const downloadCard = () =>
+    downloadText(
+      `eva-card-boxwork-sol${sel.fromSol}-${sel.toSol}${sel.returnToStart ? "-return" : ""}.md`,
+      buildEvaCard({
+        result,
+        timeline,
+        crew,
+        returnToStart: sel.returnToStart,
+        allStops: BOXWORK_STOPS,
+        credit: BOXWORK_META.credit,
+      }),
+      "text/markdown;charset=utf-8",
+    );
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
-      <div className="relative h-[62vh] min-h-[420px] overflow-hidden rounded-2xl border border-line bg-black xl:h-[calc(100vh-200px)]">
+      <div
+        ref={mapBox}
+        className="relative h-[62vh] min-h-[420px] overflow-hidden rounded-2xl border border-line bg-black xl:h-[calc(100vh-200px)]"
+      >
         <BoxworkMap
           span={result.outbound}
           selectedSol={focusSol}
@@ -134,8 +203,26 @@ export default function BoxworkTraverse() {
           showStops={layers.stops}
           onSelect={setFocusSol}
           onBasemap={setBasemap}
+          walker={walker}
         />
-        {layers.hirise && basemap === "offline" ? (
+        {walk && replay ? (
+          <ReplayHud
+            walk={walk}
+            t={replay.t}
+            playing={replay.playing}
+            speed={replay.speed}
+            timeline={timeline}
+            milestones={milestones}
+            onToggle={() =>
+              setReplay((r) =>
+                r ? { ...r, playing: !r.playing && r.t < timeline.totalMinutes } : r,
+              )
+            }
+            onSpeed={(speed) => setReplay((r) => (r ? { ...r, speed } : r))}
+            onExit={() => setReplay(null)}
+          />
+        ) : null}
+        {!replay && layers.hirise && basemap === "offline" ? (
           <div className="pointer-events-none absolute left-14 right-3 top-3 z-[500] rounded-lg border border-amber/40 bg-black/75 px-3 py-2 font-mono text-[10.5px] text-amber">
             HiRISE tiles unreachable (NASA Mars Trek). The rover path below is still real MMGIS
             data.
@@ -458,6 +545,20 @@ export default function BoxworkTraverse() {
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"
+              className={btn.secondary}
+              disabled={plan.profile.length < 2}
+              onClick={() => {
+                setReplay({ t: 0, playing: true, speed: 5 });
+                mapBox.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+            >
+              <Play className="size-3.5" /> Replay the walk
+            </button>
+            <button type="button" className={btn.secondary} onClick={downloadCard}>
+              <Download className="size-3.5" /> EVA card (.md)
+            </button>
+            <button
+              type="button"
               className={cn(btn.primary, "col-span-2")}
               disabled={isSaved}
               onClick={() => dispatchMission({ type: "setEvaPlan", plan })}
@@ -675,6 +776,99 @@ function EnvironmentNow({ elevationM, durationMin }: { elevationM: number; durat
   );
 }
 
+function ReplayHud({
+  walk,
+  t,
+  playing,
+  speed,
+  timeline,
+  milestones,
+  onToggle,
+  onSpeed,
+  onExit,
+}: {
+  walk: WalkState;
+  t: number;
+  playing: boolean;
+  speed: number;
+  timeline: WalkTimeline;
+  milestones: Milestone[];
+  onToggle: () => void;
+  onSpeed: (minutesPerSecond: number) => void;
+  onExit: () => void;
+}) {
+  const next = milestones.find((m) => m.t > t + 1e-6);
+  const progress = timeline.totalMinutes > 0 ? t / timeline.totalMinutes : 1;
+  return (
+    <div
+      className="absolute right-3 top-3 z-[600] w-[min(320px,calc(100%-4.5rem))] rounded-xl border border-cyan/40 bg-black/80 p-3 font-mono text-[10.5px] text-white shadow-lg backdrop-blur"
+      role="status"
+      aria-live="off"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[9px] uppercase tracking-[.18em] text-cyan">
+          Marswalk replay · modelled
+        </span>
+        <span className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={playing ? "Pause" : "Play"}
+            className="rounded border border-white/25 p-1 hover:border-cyan"
+          >
+            {playing ? <Pause className="size-3" /> : <Play className="size-3" />}
+          </button>
+          <select
+            value={speed}
+            onChange={(e) => onSpeed(Number(e.target.value))}
+            aria-label="Replay speed"
+            className="rounded border border-white/25 bg-black px-1 py-0.5"
+          >
+            <option value={1}>×60</option>
+            <option value={5}>×300</option>
+            <option value={15}>×900</option>
+          </select>
+          <button
+            type="button"
+            onClick={onExit}
+            aria-label="Exit replay"
+            className="rounded border border-white/25 p-1 hover:border-rose"
+          >
+            <X className="size-3" />
+          </button>
+        </span>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5">
+        <span>
+          T+ <b className="text-[13px]">{formatMissionTime(t)}</b> /{" "}
+          {formatMissionTime(timeline.totalMinutes)}
+        </span>
+        <span>
+          Walked <b>{fmt.n(walk.distanceM)}</b> / {fmt.n(timeline.totalDistanceM)} m
+        </span>
+        <span>
+          Suit O₂ used <b>{walk.o2Kg.toFixed(2)}</b> kg
+        </span>
+        <span>
+          Elevation <b>{fmt.n(walk.position[1])}</b> m
+        </span>
+      </div>
+      <p className="mt-1.5 truncate text-amber">
+        {walk.done
+          ? "EVA complete"
+          : walk.stop
+            ? `● Science stop: ${walk.stop}`
+            : next
+              ? `▶ Next: ${next.event} in ${formatMissionTime(next.t - t)}`
+              : "▶ Walking"}
+      </p>
+      <div className="mt-1.5 h-1 overflow-hidden rounded bg-white/15">
+        <div className="h-full bg-cyan" style={{ width: `${Math.round(progress * 100)}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------- Leaflet map ------------------------------- */
 
 interface MapProps {
@@ -685,6 +879,8 @@ interface MapProps {
   showStops: boolean;
   onSelect: (sol: number) => void;
   onBasemap: (status: Basemap) => void;
+  /** Position of the replayed astronaut, when a replay is running. */
+  walker: { lat: number; lon: number } | null;
 }
 
 function BoxworkMap({
@@ -695,6 +891,7 @@ function BoxworkMap({
   showStops,
   onSelect,
   onBasemap,
+  walker,
 }: MapProps) {
   const el = useRef<HTMLDivElement>(null);
   const L = useRef<typeof Leaflet | null>(null);
@@ -706,6 +903,7 @@ function BoxworkMap({
   basemapRef.current = onBasemap;
   const [ready, setReady] = useState(false);
   const [scale, setScale] = useState<{ px: number; label: string } | null>(null);
+  const walkerMarker = useRef<Leaflet.Marker | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -753,6 +951,7 @@ function BoxworkMap({
       map.current?.remove();
       map.current = null;
       base.current = null;
+      walkerMarker.current = null;
     };
   }, []);
 
@@ -867,6 +1066,34 @@ function BoxworkMap({
       group.remove();
     };
   }, [ready, span, selectedSol, showTilt, showStops]);
+
+  const walkerLat = walker?.lat;
+  const walkerLon = walker?.lon;
+  useEffect(() => {
+    const lib = L.current;
+    const m = map.current;
+    if (!ready || !lib || !m) return;
+    if (walkerLat === undefined || walkerLon === undefined) {
+      walkerMarker.current?.remove();
+      walkerMarker.current = null;
+      return;
+    }
+    const at: [number, number] = [walkerLat, walkerLon];
+    if (!walkerMarker.current) {
+      const icon = lib.divIcon({
+        className: "",
+        html: '<div class="bw-walker"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      });
+      walkerMarker.current = lib
+        .marker(at, { icon, interactive: false, keyboard: false, zIndexOffset: 1000 })
+        .addTo(m);
+    } else {
+      walkerMarker.current.setLatLng(at);
+    }
+    if (!m.getBounds().pad(-0.1).contains(at)) m.panTo(at, { animate: true });
+  }, [ready, walkerLat, walkerLon]);
 
   return (
     <>

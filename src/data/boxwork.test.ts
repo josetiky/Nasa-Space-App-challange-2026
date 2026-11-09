@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { buildWalkTimeline } from "@/core/science/evaWalk";
 import { planRoverTraverseEva, toLocalMetres } from "@/core/science/roverTraverse";
 import { BOXWORK_STOPS, BOXWORK_WAYPOINTS, planBoxworkEva } from "./boxwork";
 
@@ -47,5 +48,13 @@ describe("Curiosity boxwork traverse data (MMGIS)", () => {
   it("is the generic rover-traverse planner applied to this campaign", () => {
     const viaGeneric = planRoverTraverseEva(BOXWORK_WAYPOINTS, BOXWORK_STOPS, { fromSol: 4641, toSol: 4711, returnToStart: true, siteId: "boxwork", siteName: "Mount Sharp boxwork (Gale)" });
     expect(planBoxworkEva({ fromSol: 4641, toSol: 4711, returnToStart: true }).plan).toEqual(viaGeneric.plan);
+  });
+
+  it("replays the drill-sites loop with exactly the plan's distance, time and O₂", () => {
+    const r = planBoxworkEva({ fromSol: 4641, toSol: 4711, returnToStart: true, crew: 2 });
+    const timeline = buildWalkTimeline(r.segmentSamples, r.plan.waypoints, r.stops, 2, r.segmentLengthFactors);
+    expect(timeline.totalDistanceM).toBeCloseTo(r.plan.distanceM, 6);
+    expect(timeline.totalMinutes).toBeCloseTo(r.plan.durationMin, 6);
+    expect(timeline.frames.at(-1)!.o2Kg).toBeCloseTo(r.plan.o2Kg, 6);
   });
 });

@@ -629,3 +629,11 @@ html.dark .mission-hero-planet-image {
   background: var(--cyan);
   color: #04131a;
 }
+.bw-walker {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--cyan);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgb(79 195 220 / 0.35), 0 0 12px rgb(79 195 220 / 0.8);
+}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataBadge, Empty, Metric, PageHeader, Panel, StatusPill, btn, fmt, scoreTone } from "@/components/mission/ui";
 import type { MissionReport } from "@/core/types";
-import { historyToCsv, reportToMarkdown } from "@/services/reportExport";
+import { historyToCsv, reportToMarkdown, downloadText } from "@/services/reportExport";
 import { dispatchMission, useMission } from "@/state/missionStore";
 import { cn } from "@/lib/utils";
 
@@ -14,16 +14,7 @@ export const Route = createFileRoute("/reports")({
   component: ReportsPage,
 });
 
-function download(name: string, text: string, type: string) {
-  const url = URL.createObjectURL(new Blob([text], { type }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+const download = downloadText;
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 

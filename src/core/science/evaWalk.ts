@@ -33,7 +33,8 @@ export interface WalkTimeline {
   waypointDistanceM: number[];
 }
 
-export function buildWalkTimeline(segmentSamples: Point[][], waypoints: Waypoint[], pois: Array<{ id: string; title: string }>, crew: number): WalkTimeline {
+/** `segmentLengthFactors` mirrors computeEvaPlan: each leg's length (and so time and O₂) is stretched by its factor (≥ 1). */
+export function buildWalkTimeline(segmentSamples: Point[][], waypoints: Waypoint[], pois: Array<{ id: string; title: string }>, crew: number, segmentLengthFactors?: number[]): WalkTimeline {
   const titles = new Map(pois.map((p) => [p.id, p.title]));
   const labels = waypoints.map((w, i) => (w.poiId && titles.get(w.poiId)) || `Waypoint ${i + 1}`);
   const frames: WalkFrame[] = [];
@@ -58,6 +59,7 @@ export function buildWalkTimeline(segmentSamples: Point[][], waypoints: Waypoint
   segmentSamples.forEach((samples, index) => {
     if (!waypoints[index] || !waypoints[index + 1] || samples.length < 2) return;
     if (frames[frames.length - 1]!.stop) frames.push({ minutes, distanceM: distance, o2Kg: o2, position, slopeDeg: 0, stop: null, target: index + 1 });
+    const factor = Math.max(1, segmentLengthFactors?.[index] ?? 1);
     for (let i = 1; i < samples.length; i += 1) {
       const a = samples[i - 1]!;
       const b = samples[i]!;
@@ -65,7 +67,7 @@ export function buildWalkTimeline(segmentSamples: Point[][], waypoints: Waypoint
       if (horizontal < 1e-6) continue;
       const dy = b.y - a.y;
       const slope = (Math.atan2(Math.abs(dy), horizontal) * 180) / Math.PI;
-      const length = Math.hypot(horizontal, dy);
+      const length = Math.hypot(horizontal, dy) * factor;
       const stepMinutes = (length / 1000 / walkingSpeedKmh(slope, dy > 0)) * 60;
       minutes += stepMinutes;
       distance += length;
@@ -78,6 +80,15 @@ export function buildWalkTimeline(segmentSamples: Point[][], waypoints: Waypoint
   });
   if (frames[frames.length - 1]!.stop) frames.push({ minutes, distanceM: distance, o2Kg: o2, position, slopeDeg: 0, stop: null, target: waypoints.length - 1 });
   return { frames, totalMinutes: minutes, totalDistanceM: distance, labels, waypointDistanceM };
+}
+
+/** Mission minute at which the walk reaches waypoint `index` (before any science stop there). */
+export function arrivalMinutes(timeline: WalkTimeline, index: number): number {
+  if (index <= 0) return 0;
+  const distance = timeline.waypointDistanceM[index];
+  if (distance === undefined) return timeline.totalMinutes;
+  const frame = timeline.frames.find((f) => f.target >= index && f.distanceM >= distance - 1e-9);
+  return frame ? frame.minutes : timeline.totalMinutes;
 }
 
 export interface WalkState {

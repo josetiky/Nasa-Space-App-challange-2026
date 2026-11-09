@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeEvaPlan } from "./eva";
-import { MMGIS_SPHERE_RADIUS_M, planRoverTraverseEva, toLocalMetres, type RoverWaypoint, type TraverseStop } from "./roverTraverse";
+import { fromLocalMetres, MMGIS_SPHERE_RADIUS_M, planRoverTraverseEva, toLocalMetres, type RoverWaypoint, type TraverseStop } from "./roverTraverse";
 
 const DEG = Math.PI / 180;
 const NORTH_0_001 = 0.001 * DEG * MMGIS_SPHERE_RADIUS_M; // ≈ 59.27 m
@@ -21,6 +21,16 @@ describe("local frame on the MMGIS sphere", () => {
     expect(p!.z).toBeCloseTo(-NORTH_0_001, 3);
     expect(p!.x).toBeCloseTo(NORTH_0_001 * Math.cos(-4.8 * DEG), 3);
     expect(p!.y).toBe(-3600);
+  });
+});
+
+describe("back from local metres", () => {
+  it("returns the original latitude and longitude", () => {
+    const origin = { lat: -4.8, lon: 137.38 };
+    const point = { lat: -4.8087161, lon: 137.3815696, elevationM: -3606.6 };
+    const back = fromLocalMetres(toLocalMetres([point], origin)[0]!, origin);
+    expect(back.lat).toBeCloseTo(point.lat, 10);
+    expect(back.lon).toBeCloseTo(point.lon, 10);
   });
 });
 
@@ -86,6 +96,14 @@ describe("EVA along a rover traverse", () => {
     expect(r.plan.waypoints.map((w) => w.id)).toEqual(["sol-3", "sol-2"]);
     expect(r.plan.distanceM).toBeCloseTo(NORTH_0_001, 3);
     expect(r.odometryM).toBeCloseTo(50, 6);
+  });
+
+  it("exposes the legs and their length factors so a walk replay can match the plan", () => {
+    const r = planRoverTraverseEva(WAYPOINTS, STOPS, { fromSol: 1, toSol: 3, returnToStart: true });
+    expect(r.segmentSamples).toHaveLength(r.plan.waypoints.length - 1);
+    expect(r.segmentLengthFactors).toHaveLength(r.plan.waypoints.length - 1);
+    expect(r.segmentLengthFactors[0]).toBeCloseTo(80 / Math.hypot(NORTH_0_001, 3), 9);
+    expect(r.segmentLengthFactors.at(-1)).toBeCloseTo(r.segmentLengthFactors[0]!, 12);
   });
 
   it("rejects a sol that is not on the traverse", () => {

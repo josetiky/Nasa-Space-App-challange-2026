@@ -20,7 +20,7 @@ export const REMS_CALIBRATION = {
     { k: 1, a: -0.0255, b: -0.0637 },
     { k: 2, a: 0.0383, b: 0.0246 },
   ],
-  /** Daily-mean air temperature: T̄ = a + b·(Q·T(τ))^¼ − c·(lat/90)² (K). */
+  /** Daily-mean air temperature: T̄ = a + b·Q_TOA^¼ − c·(lat/90)² − lapse·Δz − d·max(0, τ − 0.5), floored at 148 K. */
   tempA: -70,
   tempB: 83,
   tempLatC: 52,

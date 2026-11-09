@@ -5,14 +5,25 @@ _Phase 1 deliverable · phased plan with acceptance criteria. Status is updated 
 | Phase | Goal | Main deliverables | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
 | 1 · Audit | Understand what exists | `PROJECT_AUDIT.md`, `FEATURE_COMPARISON.md`, `TECHNICAL_ARCHITECTURE.md`, this roadmap | Every module classified reuse/adapt/new; NASA endpoints tested | ✅ Done |
-| 2 · Visual integration | One navigation, one look, shared state | App shell (sidebar + status bar + real Mars clock), dark mission-control theme, mission store, route stubs for the 8 modules, legacy routes kept, misleading labels fixed, TS errors fixed | All old routes still render; new nav reaches every module; `tsc` clean | ⏳ |
-| 3 · Mars Explorer | Real-data 3D exploration | Globe with Trek imagery + MOLA relief, click-to-coordinates, catalogue sites, Surface EVA on Access Mars terrain with POIs and waypoint profile | Selecting a point updates the shared selection; EVA plan stored | ⏳ |
-| 4 · Survival Atlas | Scientific cartography | 10 toggleable layers with legend/unit/source/period/resolution/data-type, location analysis, 3-site comparison, hazard & resource references | Clicking a point samples all layers; "use as mission site" flows to the planner | ⏳ |
-| 5 · Decision Engine | Deterministic recommendations | Rules, criteria, look-ahead evaluator, explanations, Decision Intelligence page, advisor integration | Same input ⇒ same output; dust-storm example ranks A–D with reasons | ⏳ |
-| 6 · Mission Simulator | Sol-by-sol mission with decisions | Engine, 10 event types, planner → simulator, decision loop, history, success/compromised/failed, reports | A full run produces a report; outcomes reachable in tests | ⏳ |
-| 7 · NASA Data | Honest integrations | Bundled snapshots + adapters + server proxies + status page | Each source shows live/snapshot status and limitations | ⏳ |
-| 8 · Testing & optimisation | Prove it works | Vitest suites, build, browser verification, lazy loading, texture LOD | Tests green, build green, end-to-end flow verified in a browser | ⏳ |
-| 9 · Documentation | Hand-off | `README.md`, `SYSTEM_ARCHITECTURE.md`, `DATA_SOURCES.md`, `SIMULATION_MODEL.md`, `DECISION_ENGINE.md`, `INSTALLATION.md`, attributions | A teammate can install, run and extend the platform | ⏳ |
+| 2 · Visual integration | One navigation, one look, shared state | App shell (sidebar + status bar + real Mars clock), dark mission-control theme, mission store, route stubs for the 8 modules, legacy routes kept, misleading labels fixed, TS errors fixed | All old routes still render; new nav reaches every module; `tsc` clean | ✅ Done |
+| 3 · Mars Explorer | Real-data 3D exploration | Globe with Trek imagery + MOLA relief, click-to-coordinates, catalogue sites, Surface EVA on Access Mars terrain with POIs and waypoint profile | Selecting a point updates the shared selection; EVA plan stored | ✅ Done |
+| 4 · Survival Atlas | Scientific cartography | 10 toggleable layers with legend/unit/source/period/resolution/data-type, location analysis, 3-site comparison, hazard & resource references | Clicking a point samples all layers; "use as mission site" flows to the planner | ✅ Done |
+| 5 · Decision Engine | Deterministic recommendations | Rules, criteria, look-ahead evaluator, explanations, Decision Intelligence page, advisor integration | Same input ⇒ same output; dust-storm example ranks A–D with reasons | ✅ Done |
+| 6 · Mission Simulator | Sol-by-sol mission with decisions | Engine, 10 event types, planner → simulator, decision loop, history, success/compromised/failed, reports | A full run produces a report; outcomes reachable in tests | ✅ Done |
+| 7 · NASA Data | Honest integrations | Bundled snapshots + adapters + server proxies + status page | Each source shows live/snapshot status and limitations | ✅ Done |
+| 8 · Testing & optimisation | Prove it works | Vitest suites, build, browser verification, lazy loading, texture LOD | Tests green, build green, end-to-end flow verified in a browser | ✅ Done |
+| 9 · Documentation | Hand-off | `README.md`, `SYSTEM_ARCHITECTURE.md`, `DATA_SOURCES.md`, `SIMULATION_MODEL.md`, `DECISION_ENGINE.md`, `INSTALLATION.md`, attributions | A teammate can install, run and extend the platform | ✅ Done |
+
+## Status (November 2026)
+
+All nine phases are implemented on branch `feature/intelligent-mission-control`: 102 unit tests passing, `tsc --noEmit` clean, production build green, and the end-to-end flow verified in headless Chrome.
+
+Known follow-ups:
+
+- Calibrate the temperature and pressure coefficients against the REMS record (`REMS_CALIBRATION.calibrated = false`).
+- Ship offline snapshots with the deployment (`npm run data:fetch`) so MOLA-based layers work on static hosts.
+- Higher-resolution topography (HRSC/CTX DEMs) for regional EVA planning outside the four Access Mars sites.
+- Optional: code-split the heaviest 3D chunks further and add a service worker for offline tiles.
 
 ## Order of work and rationale
 

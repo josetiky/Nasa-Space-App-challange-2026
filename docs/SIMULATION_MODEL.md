@@ -41,6 +41,16 @@ All models live in `src/core` as pure, unit-tested TypeScript. Every constant is
 
 **EVA model.** Walking speed `v = 3 km/h · exp(−3.5·|g + 0.05|)/exp(−0.175)` (Tobler-type, normalised to 3 km/h on flat ground, ASSUMPTION). Metabolic rate 300 W + 12 W per degree of slope (ASSUMPTION). O₂ from the energy equivalent of oxygen (20.1 kJ/L, 700 L/kg). Slopes ≥ 15° raise a caution and ≥ 25° are no-go. Stops: 20 min per POI. On the Access Mars terrain the route is sampled every 1 m by ray-casting onto the collision mesh.
 
+**Safe route (A\*).** `src/core/science/routing.ts` rasterises the collision mesh into a height grid (1 m nodes, coarser for long legs). A\* then searches 8-connected nodes:
+- Steps at or above 25° and unknown terrain are impassable.
+- Steps in the 15–25° caution band cost ×4 more.
+- Step cost is `length·(1 + (slope/15°)²)`.
+- Diagonals may not cut the corner of an impassable neighbour.
+
+The node path is simplified by line of sight, without ever exceeding the raw path's steepest slope (sampled every half cell).
+
+**Helmet HUD.** `src/core/science/evaWalk.ts` turns the route into a timeline (walking and science stops) using the same accounting as the EVA plan. Tests prove it ends on the plan's distance, duration and suit O₂. The HUD's GCR dose uses the Gale dose-rate model (MODELLED).
+
 ## 2. Mission simulator (`src/core/sim`)
 
 **State.** Resources (O₂ kg, water kg, food crew-days, battery kWh, spare kits), systems health (life support, power, habitat, comms, rover, ISRU; %), crew (health, morale, cumulative dose), habitat temperature, panel cleanliness, science, active effects, pending event, log, per-sol history, decisions, incidents and consumption totals.

@@ -103,6 +103,6 @@ The root shell is server-rendered. Module routes use `ssr: false` because they r
 
 ## Testing strategy
 
-- **Unit (Vitest)**: science models (Mars time including year numbering, insolation, pressure, temperature, terrain sampling, EVA), simulator (consumption, sol advance, events, outcomes, purity and reproducibility, event injection), decision engine (rules, determinism, posture weights, feasibility), planning (sizing, feasibility preview), store (lifecycle, persistence), transforms (MEGDR, REMS, traverses, DONKI), adapters (fallback order, Trek URLs), effect and protocol helpers, advisor narration, report exports.
+- **Unit (Vitest)**: science models (Mars time including year numbering, insolation, pressure, temperature and its REMS calibration, terrain sampling, EVA, EVA walk timeline, A* safe routing), simulator (consumption, sol advance, events, outcomes, purity and reproducibility, event injection), decision engine (rules, determinism, posture weights, feasibility), planning (sizing, feasibility preview), store (lifecycle, persistence), transforms (MEGDR, REMS, traverses, DONKI), adapters (fallback order, Trek URLs), effect and protocol helpers, advisor narration, report exports.
 - **Type safety**: `tsc --noEmit` with `strict` and `exactOptionalPropertyTypes`.
 - **End-to-end check**: headless Chrome (Playwright) drove the whole flow: atlas → planner → simulator → decisions → reports, plus the globe and the Access Mars terrain with waypoint picking.

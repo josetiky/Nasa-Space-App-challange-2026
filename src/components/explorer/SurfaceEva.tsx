@@ -4,6 +4,7 @@ import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNo
 import * as THREE from "three";
 import { computeEvaPlan, metabolicRateW } from "@/core/science/eva";
 import { buildWalkTimeline, sampleWalk, type WalkState, type WalkTimeline } from "@/core/science/evaWalk";
+import { createHeightGrid, findSafePath, rasterizeTriangles, type HeightGrid } from "@/core/science/routing";
 import { gcrDosePerSol, pressureAt } from "@/core/science/environment";
 import { EVA } from "@/core/science/constants";
 import type { EvaPlan, EvaWaypoint } from "@/core/types";
@@ -13,6 +14,8 @@ type Sample = { x: number; y: number; z: number };
 
 interface TerrainInfo {
   ground: (x: number, z: number) => number | null;
+  /** Height grid of the collision surface over a box (for safe-route search). */
+  grid: (minX: number, maxX: number, minZ: number, maxZ: number, cell: number) => HeightGrid;
 }
 
 /** Node metadata written by the Access Mars Cinema 4D pipeline into glTF node names. */
@@ -95,11 +98,35 @@ function Terrain({ site, onReady, onPick }: { site: EvaSite; onReady: (info: Ter
     const raycaster = new THREE.Raycaster();
     const down = new THREE.Vector3(0, -1, 0);
     const targets: THREE.Object3D[] = simple ? [simple] : tiles;
+    // World-space triangles of the collision surface (computed once, reused by every route search).
+    let world: Array<{ positions: Float32Array; index: ArrayLike<number> | undefined }> | null = null;
+    const worldTriangles = () => {
+      if (world) return world;
+      world = targets.map((object) => {
+        const mesh = object as THREE.Mesh;
+        const attr = mesh.geometry.getAttribute("position");
+        const positions = new Float32Array(attr.count * 3);
+        const v = new THREE.Vector3();
+        for (let k = 0; k < attr.count; k += 1) {
+          v.fromBufferAttribute(attr, k).applyMatrix4(mesh.matrixWorld);
+          positions[k * 3] = v.x;
+          positions[k * 3 + 1] = v.y;
+          positions[k * 3 + 2] = v.z;
+        }
+        return { positions, index: mesh.geometry.getIndex()?.array };
+      });
+      return world;
+    };
     onReady({
       ground: (x, z) => {
         raycaster.set(new THREE.Vector3(x, 400, z), down);
         const hit = raycaster.intersectObjects(targets, false)[0] ?? (simple ? raycaster.intersectObjects(tiles, false)[0] : undefined);
         return hit ? hit.point.y : null;
+      },
+      grid: (minX, maxX, minZ, maxZ, cell) => {
+        const grid = createHeightGrid(minX, minZ, cell, Math.floor((maxX - minX) / cell) + 1, Math.floor((maxZ - minZ) / cell) + 1);
+        for (const { positions, index } of worldTriangles()) rasterizeTriangles(grid, positions, index);
+        return grid;
       },
     });
     return () => {
@@ -335,6 +362,44 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [walkState, setWalkState] = useState<WalkState | null>(null);
+  const [routeNote, setRouteNote] = useState<{ text: string; tone: "ok" | "warn" } | null>(null);
+  const [beforeRoute, setBeforeRoute] = useState<EvaWaypoint[] | null>(null);
+
+  /** Replace each straight leg by an A* path that avoids caution slopes and never crosses no-go terrain. */
+  const planSafeRoute = () => {
+    if (!terrain || waypoints.length < 2) return;
+    const next: EvaWaypoint[] = [waypoints[0]!];
+    let rerouted = 0;
+    const failed: number[] = [];
+    let maxSlope = 0;
+    waypoints.slice(1).forEach((b, i) => {
+      const a = waypoints[i]!;
+      const span = Math.hypot(b.x - a.x, b.z - a.z);
+      const margin = Math.max(25, span * 0.5);
+      const minX = Math.min(a.x, b.x) - margin;
+      const maxX = Math.max(a.x, b.x) + margin;
+      const minZ = Math.min(a.z, b.z) - margin;
+      const maxZ = Math.max(a.z, b.z) + margin;
+      const cell = Math.max(1, Math.sqrt(((maxX - minX) * (maxZ - minZ)) / 60000));
+      const result = findSafePath(terrain.grid(minX, maxX, minZ, maxZ, cell), a, b);
+      if (!result.found) {
+        failed.push(i + 1);
+        next.push(b);
+        return;
+      }
+      maxSlope = Math.max(maxSlope, result.maxSlopeDeg);
+      if (result.points.length > 2) rerouted += 1;
+      result.points.slice(1, -1).forEach((p, k) => next.push({ id: `safe-${Date.now().toString(36)}-${i}-${k}`, x: p.x, y: terrain.ground(p.x, p.z) ?? a.y, z: p.z }));
+      next.push(b);
+    });
+    setBeforeRoute(waypoints);
+    setWaypoints(next);
+    setRouteNote(
+      failed.length
+        ? { tone: "warn", text: `No path under 25° found for leg${failed.length > 1 ? "s" : ""} ${failed.join(", ")} — kept straight; move the waypoints.` }
+        : { tone: "ok", text: `Safe route: ${rerouted} leg${rerouted === 1 ? "" : "s"} rerouted · steepest ${maxSlope.toFixed(1)}° (A* on the terrain mesh; caution ≥ ${EVA.cautionSlopeDeg}°, no-go ≥ ${EVA.noGoSlopeDeg}°).` },
+    );
+  };
 
   useEffect(() => {
     setWaypoints(initial && initial.siteId === site.id ? initial.waypoints : []);
@@ -384,6 +449,8 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
     const snap = pois.find(({ poi }) => Math.hypot(poi.position[0] - point.x, poi.position[2] - point.z) < 5);
     const wp: EvaWaypoint = snap ? { id: `wp-${Date.now()}`, x: snap.poi.position[0], y: snap.y, z: snap.poi.position[2], poiId: snap.poi.id } : { id: `wp-${Date.now()}`, x: point.x, y: point.y, z: point.z };
     setWaypoints((prev) => [...prev, wp]);
+    setRouteNote(null);
+    setBeforeRoute(null);
   };
 
   const line = useMemo(() => {
@@ -452,6 +519,14 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
         <button type="button" className="rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-2.5 py-1 font-mono text-[10.5px] text-cyan-50 disabled:opacity-40" disabled={!timeline} onClick={() => (setWalkState(null), setPaused(false), setWalking(true))}>
           Walk route (helmet HUD)
         </button>
+        <button type="button" className="rounded-lg border border-emerald-300/40 bg-emerald-500/20 px-2.5 py-1 font-mono text-[10.5px] text-emerald-50 disabled:opacity-40" disabled={!terrain || waypoints.length < 2} onClick={planSafeRoute} title="Reroute every leg with A* over the terrain mesh, avoiding slopes ≥ 15° where possible and never crossing ≥ 25°">
+          Safe route (A*)
+        </button>
+        {beforeRoute ? (
+          <button type="button" className="rounded-lg border border-white/15 bg-black/65 px-2.5 py-1 font-mono text-[10.5px] text-white" onClick={() => (setWaypoints(beforeRoute), setBeforeRoute(null), setRouteNote(null))}>
+            Revert route
+          </button>
+        ) : null}
         <button type="button" className="rounded-lg border border-white/15 bg-black/65 px-2.5 py-1 font-mono text-[10.5px] text-white disabled:opacity-40" disabled={!waypoints.length} onClick={() => setWaypoints((w) => w.slice(0, -1))}>
           Undo waypoint
         </button>
@@ -459,6 +534,9 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
           Clear route
         </button>
         <span className="rounded-lg border border-white/15 bg-black/55 px-2.5 py-1 font-mono text-[10.5px] text-white/80">Click the ground to add waypoints · click a blue marker for the POI card</span>
+        {routeNote ? (
+          <span className={`basis-full rounded-lg border px-2.5 py-1 font-mono text-[10.5px] ${routeNote.tone === "ok" ? "border-emerald-300/40 bg-black/70 text-emerald-200" : "border-amber-300/50 bg-black/70 text-amber-200"}`}>{routeNote.text}</span>
+        ) : null}
       </div>
     </div>
   );

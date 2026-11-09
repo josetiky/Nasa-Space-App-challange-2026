@@ -162,3 +162,30 @@ describe("EVA model", () => {
     expect(plan.hazards.join(" ")).toMatch(/no-go/);
   });
 });
+
+describe("Mars year numbering (Clancy et al. / Piqueux et al. 2015)", () => {
+  // Northern spring equinoxes: MY 37 began 2022-12-26, MY 38 2024-11-12, MY 39 2026-09-30; MY 1 began 1955-04-11.
+  it.each([
+    ["1955-04-20T00:00:00Z", 1],
+    ["2022-12-20T00:00:00Z", 36],
+    ["2022-12-30T00:00:00Z", 37],
+    ["2024-11-01T00:00:00Z", 37],
+    ["2024-11-20T00:00:00Z", 38],
+    ["2026-09-25T00:00:00Z", 38],
+    ["2026-11-09T00:00:00Z", 39],
+  ])("%s is in MY %i", async (iso, my) => {
+    const { marsTimeFromDate } = await import("./marsTime");
+    expect(marsTimeFromDate(new Date(iso)).marsYear).toBe(my);
+  });
+});
+
+describe("location flags", () => {
+  it("says a documented target is at the site instead of 'within 0 km'", async () => {
+    const { analyzeLocation } = await import("./habitability");
+    const { describeEnvironment } = await import("./environment");
+    const env = describeEnvironment({ lat: 18.44, lon: 77.45 }, null);
+    const texts = analyzeLocation({ id: "j", name: "Jezero", point: { lat: 18.44, lon: 77.45 }, kind: "catalogue" }, env).flags.map((f) => f.text);
+    expect(texts.join(" ")).not.toMatch(/within 0 km/);
+    expect(texts.some((t) => /at the site/.test(t))).toBe(true);
+  });
+});

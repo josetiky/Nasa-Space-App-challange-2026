@@ -68,7 +68,7 @@ export function locationFlags(env: SiteEnvironment): LocationAnalysis["flags"] {
   if (env.dustActivity > 0.55) flags.push({ level: "caution", text: "Inside a commonly reported dust-storm track." });
   if (env.iceLikelihood > 0.6) flags.push({ level: "info", text: "Ground ice likely within reach (qualitative proxy)." });
   if (env.shieldingGcm2 > 22) flags.push({ level: "info", text: "Thick atmospheric column: better natural shielding than Gale." });
-  if (env.nearestTarget && env.nearestTarget.distanceKm < 150) flags.push({ level: "info", text: `${env.nearestTarget.name} within ${Math.round(env.nearestTarget.distanceKm)} km.` });
+  if (env.nearestTarget && env.nearestTarget.distanceKm < 150) flags.push({ level: "info", text: env.nearestTarget.distanceKm < 5 ? `${env.nearestTarget.name} is at the site.` : `${env.nearestTarget.name} within ${Math.round(env.nearestTarget.distanceKm)} km.` });
   return flags;
 }
 

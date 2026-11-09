@@ -55,12 +55,28 @@ export function marsTimeFromDate(date: Date, ttMinusUtcS: number = TT_MINUS_UTC_
   const eotDeg = 2.861 * Math.sin(2 * ls * DEG) - 0.071 * Math.sin(4 * ls * DEG) + 0.002 * Math.sin(6 * ls * DEG) - nuMinusM;
   const msd = (jdTT - 2451549.5) / 1.0274912517 + 44796.0 - 0.0009626;
   const mtcHours = mod(24 * msd, 24);
-  return { julianDateTT: jdTT, msd, mtcHours, ls, eotDeg, marsYear: marsYearFromMsd(msd) };
+  return { julianDateTT: jdTT, msd, mtcHours, ls, eotDeg, marsYear: marsYearFromMsd(msd, ls) };
 }
 
-/** Mars year number: MY 1 started at MSD 34 (approx. 1955-04-11, Ls 0). One Mars year = 668.6 sols. */
-export function marsYearFromMsd(msd: number): number {
-  return Math.floor((msd - 34) / 668.5991) + 1;
+/** Mean tropical Mars year (686.9726 days) in sols. */
+const TROPICAL_YEAR_SOLS = 686.9726 / 1.0274912517;
+/** MSD at 2022-12-26 00:00 UTC, the northern spring equinox that began MY 37 (Clancy et al. numbering). */
+const MY37_START_MSD = 52961.52;
+
+/**
+ * Mars year number (Clancy et al. 2000; MY 1 began 1955-04-11). Counted from the
+ * MY 37 equinox with the tropical year; when Ls is given, dates within ~10 % of a
+ * year boundary are snapped to the side indicated by Ls (equinox at Ls = 0).
+ */
+export function marsYearFromMsd(msd: number, ls?: number): number {
+  const estimate = 37 + (msd - MY37_START_MSD) / TROPICAL_YEAR_SOLS;
+  let my = Math.floor(estimate);
+  if (ls !== undefined) {
+    const frac = estimate - my;
+    if (frac < 0.1 && ls > 300) my -= 1;
+    else if (frac > 0.9 && ls < 60) my += 1;
+  }
+  return my;
 }
 
 /**

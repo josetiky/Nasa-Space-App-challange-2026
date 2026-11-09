@@ -149,3 +149,19 @@ describe("success and failure conditions", () => {
     expect(reserveSols(end).min).toBeTypeOf("number");
   });
 });
+
+describe("event injection (decision sandbox)", () => {
+  it("puts a chosen event on the pending slot without mutating the input state", async () => {
+    const { injectEvent } = await import("./engine");
+    const start = createInitialState(makePlan());
+    const before = JSON.stringify(start);
+    const s = injectEvent(start, "dustStorm", 2);
+    expect(JSON.stringify(start)).toBe(before);
+    expect(s.status).toBe("awaiting-decision");
+    expect(s.pending?.type).toBe("dustStorm");
+    expect(s.pending?.severity).toBe(2);
+    expect(s.pending?.options.map((o) => o.id)).toEqual(expect.arrayContaining(["shelter", "reduce"]));
+    expect(s.effects.some((e) => e.source === "dustStorm")).toBe(true);
+    expect(s.incidents).toHaveLength(1);
+  });
+});

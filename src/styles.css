@@ -64,16 +64,17 @@
 
 html.dark {
   color-scheme: dark;
-  --ink: oklch(0.13 0.02 250);
-  --ink2: oklch(0.18 0.025 250);
-  --panel: oklch(0.20 0.025 250);
-  --line: oklch(0.31 0.025 250);
-  --fog: oklch(0.73 0.025 250);
-  --bright: oklch(0.97 0.01 250);
-  --amber: oklch(0.72 0.16 55);
-  --cyan: oklch(0.70 0.12 200);
-  --rose: oklch(0.68 0.17 22);
-  --mint: oklch(0.65 0.13 160);
+  /* Mission control: black / graphite surfaces, Mars red and amber accents. */
+  --ink: oklch(0.135 0.006 40);
+  --ink2: oklch(0.175 0.009 40);
+  --panel: oklch(0.19 0.011 40);
+  --line: oklch(0.30 0.016 40);
+  --fog: oklch(0.74 0.018 60);
+  --bright: oklch(0.965 0.008 70);
+  --amber: oklch(0.79 0.15 70);
+  --cyan: oklch(0.76 0.10 215);
+  --rose: oklch(0.65 0.20 30);
+  --mint: oklch(0.75 0.14 158);
 }
 
 @layer base {
@@ -238,68 +239,79 @@ a {
 }
 
 
-/* User-selectable dark mission-control theme */
+/* Dark mission-control theme (default) — legacy light-styled components adapt via tokens. */
 html.dark body {
-  background: #0b1118;
-  color: #f8fafc;
-}
-
-html.dark .theme-toggle {
-  background: #111827;
-  border-color: #334155;
-  color: #f8fafc;
-}
-
-html.dark header {
-  background: rgba(15, 23, 42, 0.88) !important;
-  border-color: #263241 !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,.24);
-}
-
-html.dark footer {
-  background: rgba(15, 23, 42, 0.86) !important;
-  border-color: #263241 !important;
+  background: var(--ink);
+  color: var(--bright);
 }
 
 html.dark .hero-mars {
   background:
-    radial-gradient(circle at 82% 20%, rgba(245,158,11,.13), transparent 30%),
-    radial-gradient(circle at 10% 80%, rgba(8,145,178,.10), transparent 28%),
-    linear-gradient(135deg, #111827, #0b1118);
-  border-color: #263241;
-  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--rose) 18%, transparent), transparent 32%),
+    radial-gradient(circle at 8% 85%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 30%),
+    linear-gradient(135deg, oklch(0.17 0.012 35), var(--ink));
+  border-color: var(--line);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
 }
 
 html.dark .hero-mars::before {
-  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 html.dark .soft-card,
 html.dark .light-section {
-  background: rgba(17,24,39,.88);
-  border-color: #334155;
-  box-shadow: 0 14px 42px rgba(0,0,0,.24);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border-color: var(--line);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.3);
 }
 
-html.dark .bg-white\/85,
-html.dark .bg-white\/80,
-html.dark .bg-white\/75,
-html.dark .bg-white\/70,
-html.dark .bg-white\/95,
-html.dark .bg-white {
-  background-color: rgb(15 23 42 / 0.9) !important;
+html.dark [class*="bg-white"]:not(.leaflet-container *) {
+  background-color: color-mix(in srgb, var(--panel) 90%, transparent) !important;
 }
 
 html.dark .text-bright {
-  color: #f8fafc !important;
+  color: var(--bright) !important;
 }
 
 html.dark .text-fog {
-  color: #94a3b8 !important;
+  color: var(--fog) !important;
 }
 
 html.dark .border-line {
-  border-color: #334155 !important;
+  border-color: var(--line) !important;
+}
+
+/* Survival Atlas (Leaflet) */
+.mc-map.leaflet-container {
+  background: #050403;
+  font-family: var(--font-mono);
+}
+.mc-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--ink) 80%, transparent);
+  color: var(--fog);
+  font-size: 9px;
+}
+.mc-map .leaflet-control-attribution a {
+  color: var(--amber);
+}
+.mc-map .leaflet-bar a {
+  background: var(--panel);
+  color: var(--bright);
+  border-color: var(--line);
+}
+.mc-map .leaflet-tooltip {
+  background: var(--panel);
+  color: var(--bright);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  box-shadow: none;
+}
+.mc-map .leaflet-tooltip::before {
+  display: none;
+}
+.mc-pixelated {
+  image-rendering: pixelated;
 }
 
 /* Immersive Mission Lab: use the full browser width without changing the home page. */

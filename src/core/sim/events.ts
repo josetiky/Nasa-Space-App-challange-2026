@@ -14,7 +14,7 @@ export interface EventDefinition {
   build: (state: SimState, severity: Severity) => Omit<MissionEvent, "id" | "sol" | "type" | "severity">;
 }
 
-const pick = <T,>(severity: Severity, values: [T, T, T]): T => values[severity - 1];
+const pick = <T,>(severity: Severity, values: [T, T, T]): T => values[severity - 1] as T;
 const healthFactor = (value: number, scale: number) => 1 + Math.max(0, 100 - value) / scale;
 
 function sev(rng: Rng, p2: number, p3: number): Severity {

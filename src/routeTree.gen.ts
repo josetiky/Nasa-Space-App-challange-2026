@@ -10,16 +10,41 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AtlasRouteImport } from './routes/atlas'
+import { Route as DecisionsRouteImport } from './routes/decisions'
+import { Route as ExplorerRouteImport } from './routes/explorer'
 import { Route as HazardLayersRouteImport } from './routes/hazard-layers'
 import { Route as MissionLabRouteImport } from './routes/mission-lab'
+import { Route as NasaDataRouteImport } from './routes/nasa-data'
+import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as ProtocolsRouteImport } from './routes/protocols'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as SolBySolRouteImport } from './routes/sol-by-sol'
 import { Route as ApiMarsAdvisorRouteImport } from './routes/api/mars-advisor'
+import { Route as ApiNasaDonkiRouteImport } from './routes/api/nasa/donki'
+import { Route as ApiNasaMolaRouteImport } from './routes/api/nasa/mola'
+import { Route as ApiNasaRemsRouteImport } from './routes/api/nasa/rems'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtlasRoute = AtlasRouteImport.update({
+  id: '/atlas',
+  path: '/atlas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionsRoute = DecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExplorerRoute = ExplorerRouteImport.update({
+  id: '/explorer',
+  path: '/explorer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HazardLayersRoute = HazardLayersRouteImport.update({
@@ -32,14 +57,34 @@ const MissionLabRoute = MissionLabRouteImport.update({
   path: '/mission-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NasaDataRoute = NasaDataRouteImport.update({
+  id: '/nasa-data',
+  path: '/nasa-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlannerRoute = PlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtocolsRoute = ProtocolsRouteImport.update({
   id: '/protocols',
   path: '/protocols',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResourcesRoute = ResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimulatorRoute = SimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SolBySolRoute = SolBySolRouteImport.update({
@@ -52,73 +97,158 @@ const ApiMarsAdvisorRoute = ApiMarsAdvisorRouteImport.update({
   path: '/api/mars-advisor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNasaDonkiRoute = ApiNasaDonkiRouteImport.update({
+  id: '/api/nasa/donki',
+  path: '/api/nasa/donki',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNasaMolaRoute = ApiNasaMolaRouteImport.update({
+  id: '/api/nasa/mola',
+  path: '/api/nasa/mola',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNasaRemsRoute = ApiNasaRemsRouteImport.update({
+  id: '/api/nasa/rems',
+  path: '/api/nasa/rems',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRoute
+  '/decisions': typeof DecisionsRoute
+  '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
   '/mission-lab': typeof MissionLabRoute
+  '/nasa-data': typeof NasaDataRoute
+  '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
+  '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
+  '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
+  '/api/nasa/donki': typeof ApiNasaDonkiRoute
+  '/api/nasa/mola': typeof ApiNasaMolaRoute
+  '/api/nasa/rems': typeof ApiNasaRemsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRoute
+  '/decisions': typeof DecisionsRoute
+  '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
   '/mission-lab': typeof MissionLabRoute
+  '/nasa-data': typeof NasaDataRoute
+  '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
+  '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
+  '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
+  '/api/nasa/donki': typeof ApiNasaDonkiRoute
+  '/api/nasa/mola': typeof ApiNasaMolaRoute
+  '/api/nasa/rems': typeof ApiNasaRemsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRoute
+  '/decisions': typeof DecisionsRoute
+  '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
   '/mission-lab': typeof MissionLabRoute
+  '/nasa-data': typeof NasaDataRoute
+  '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
+  '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
+  '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
+  '/api/nasa/donki': typeof ApiNasaDonkiRoute
+  '/api/nasa/mola': typeof ApiNasaMolaRoute
+  '/api/nasa/rems': typeof ApiNasaRemsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/atlas'
+    | '/decisions'
+    | '/explorer'
     | '/hazard-layers'
     | '/mission-lab'
+    | '/nasa-data'
+    | '/planner'
     | '/protocols'
+    | '/reports'
     | '/resources'
+    | '/simulator'
     | '/sol-by-sol'
     | '/api/mars-advisor'
+    | '/api/nasa/donki'
+    | '/api/nasa/mola'
+    | '/api/nasa/rems'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/atlas'
+    | '/decisions'
+    | '/explorer'
     | '/hazard-layers'
     | '/mission-lab'
+    | '/nasa-data'
+    | '/planner'
     | '/protocols'
+    | '/reports'
     | '/resources'
+    | '/simulator'
     | '/sol-by-sol'
     | '/api/mars-advisor'
+    | '/api/nasa/donki'
+    | '/api/nasa/mola'
+    | '/api/nasa/rems'
   id:
     | '__root__'
     | '/'
+    | '/atlas'
+    | '/decisions'
+    | '/explorer'
     | '/hazard-layers'
     | '/mission-lab'
+    | '/nasa-data'
+    | '/planner'
     | '/protocols'
+    | '/reports'
     | '/resources'
+    | '/simulator'
     | '/sol-by-sol'
     | '/api/mars-advisor'
+    | '/api/nasa/donki'
+    | '/api/nasa/mola'
+    | '/api/nasa/rems'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AtlasRoute: typeof AtlasRoute
+  DecisionsRoute: typeof DecisionsRoute
+  ExplorerRoute: typeof ExplorerRoute
   HazardLayersRoute: typeof HazardLayersRoute
   MissionLabRoute: typeof MissionLabRoute
+  NasaDataRoute: typeof NasaDataRoute
+  PlannerRoute: typeof PlannerRoute
   ProtocolsRoute: typeof ProtocolsRoute
+  ReportsRoute: typeof ReportsRoute
   ResourcesRoute: typeof ResourcesRoute
+  SimulatorRoute: typeof SimulatorRoute
   SolBySolRoute: typeof SolBySolRoute
   ApiMarsAdvisorRoute: typeof ApiMarsAdvisorRoute
+  ApiNasaDonkiRoute: typeof ApiNasaDonkiRoute
+  ApiNasaMolaRoute: typeof ApiNasaMolaRoute
+  ApiNasaRemsRoute: typeof ApiNasaRemsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -128,6 +258,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/atlas': {
+      id: '/atlas'
+      path: '/atlas'
+      fullPath: '/atlas'
+      preLoaderRoute: typeof AtlasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decisions': {
+      id: '/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof DecisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explorer': {
+      id: '/explorer'
+      path: '/explorer'
+      fullPath: '/explorer'
+      preLoaderRoute: typeof ExplorerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hazard-layers': {
@@ -144,6 +295,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MissionLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nasa-data': {
+      id: '/nasa-data'
+      path: '/nasa-data'
+      fullPath: '/nasa-data'
+      preLoaderRoute: typeof NasaDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planner': {
+      id: '/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof PlannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/protocols': {
       id: '/protocols'
       path: '/protocols'
@@ -151,11 +316,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtocolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resources': {
       id: '/resources'
       path: '/resources'
       fullPath: '/resources'
       preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulator': {
+      id: '/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof SimulatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sol-by-sol': {
@@ -172,17 +351,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarsAdvisorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/nasa/donki': {
+      id: '/api/nasa/donki'
+      path: '/api/nasa/donki'
+      fullPath: '/api/nasa/donki'
+      preLoaderRoute: typeof ApiNasaDonkiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/nasa/mola': {
+      id: '/api/nasa/mola'
+      path: '/api/nasa/mola'
+      fullPath: '/api/nasa/mola'
+      preLoaderRoute: typeof ApiNasaMolaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/nasa/rems': {
+      id: '/api/nasa/rems'
+      path: '/api/nasa/rems'
+      fullPath: '/api/nasa/rems'
+      preLoaderRoute: typeof ApiNasaRemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AtlasRoute: AtlasRoute,
+  DecisionsRoute: DecisionsRoute,
+  ExplorerRoute: ExplorerRoute,
   HazardLayersRoute: HazardLayersRoute,
   MissionLabRoute: MissionLabRoute,
+  NasaDataRoute: NasaDataRoute,
+  PlannerRoute: PlannerRoute,
   ProtocolsRoute: ProtocolsRoute,
+  ReportsRoute: ReportsRoute,
   ResourcesRoute: ResourcesRoute,
+  SimulatorRoute: SimulatorRoute,
   SolBySolRoute: SolBySolRoute,
   ApiMarsAdvisorRoute: ApiMarsAdvisorRoute,
+  ApiNasaDonkiRoute: ApiNasaDonkiRoute,
+  ApiNasaMolaRoute: ApiNasaMolaRoute,
+  ApiNasaRemsRoute: ApiNasaRemsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -157,6 +157,27 @@ function rollEvent(state: SimState, evaToday: boolean): MissionEvent | null {
   return { ...built, id: `ev-${state.sol}-${chosen}`, sol: state.sol, type: chosen, severity };
 }
 
+/** Apply an event's immediate and ongoing effects and make it the pending decision (mutates `next`). */
+function materializeEvent(next: SimState, event: MissionEvent) {
+  if (event.immediate) applyImmediate(next, event.immediate);
+  if (event.eventEffect) next.effects.push({ id: event.id, source: event.type, label: event.eventEffect.label, remainingSols: event.eventEffect.sols, mods: event.eventEffect.mods });
+  next.pending = event;
+  next.status = "awaiting-decision";
+  next.incidents.push({ sol: next.sol, type: event.type, title: event.title, severity: event.severity });
+  addLog(next, "event", `${event.title}: ${event.description}`);
+}
+
+/**
+ * Decision sandbox: put an event of the given type and severity on the pending
+ * slot exactly as the simulator would (pure — returns a new state).
+ */
+export function injectEvent(state: SimState, type: EventType, severity: 1 | 2 | 3): SimState {
+  const next = cloneState(state);
+  const built = EVENT_DEFINITIONS[type].build(next, severity);
+  materializeEvent(next, { ...built, id: `ev-${next.sol}-${type}-sandbox`, sol: next.sol, type, severity });
+  return next;
+}
+
 /** Advance the mission by one sol. Pure: returns a new state. */
 export function stepSol(state: SimState, options: { keepHistory?: boolean } = {}): SimState {
   if (state.status !== "running") return state;
@@ -280,12 +301,7 @@ export function stepSol(state: SimState, options: { keepHistory?: boolean } = {}
 
   const event = rollEvent(next, evaToday);
   if (event) {
-    if (event.immediate) applyImmediate(next, event.immediate);
-    if (event.eventEffect) next.effects.push({ id: event.id, source: event.type, label: event.eventEffect.label, remainingSols: event.eventEffect.sols, mods: event.eventEffect.mods });
-    next.pending = event;
-    next.status = "awaiting-decision";
-    next.incidents.push({ sol, type: event.type, title: event.title, severity: event.severity });
-    addLog(next, "event", `${event.title}: ${event.description}`);
+    materializeEvent(next, event);
     const afterEvent = checkFailure(next);
     if (afterEvent) {
       next.status = "failed";

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Activity, ArrowRight, BrainCircuit, ClipboardList, CloudSun, Database, FileText, Globe2, Layers, Play, Sparkles, Box } from "lucide-react";
+import { Activity, ArrowRight, BrainCircuit, ClipboardList, CloudSun, Database, FileText, Footprints, Globe2, Layers, Play, Sparkles, Box } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { DataBadge, Empty, FlowStepper, Loading, Metric, Panel, StatusPill, btn, fmt, scoreTone } from "@/components/mission/ui";
@@ -84,7 +84,7 @@ function HomeMarsGlobe() {
 
 
 const MODULES = [
-  { to: "/explorer", icon: Globe2, title: "Mars Explorer", text: "3D globe on NASA Trek imagery and MOLA relief, plus real Curiosity terrain for EVA route planning." },
+  { to: "/explorer", icon: Globe2, title: "Mars Explorer", text: "3D globe on NASA Trek imagery and MOLA relief, real Curiosity terrain for EVA route planning, and a Marswalk on Curiosity's 2025 boxwork path." },
   { to: "/atlas", icon: Layers, title: "Survival Atlas", text: "Ten switchable layers with source, period, resolution and data-type labels; compare up to three sites." },
   { to: "/planner", icon: ClipboardList, title: "Mission Planner", text: "Crew, habitat, power, supplies, ISRU and EVA cadence, validated and sized against BVAD consumption rates." },
   { to: "/simulator", icon: Activity, title: "Mission Simulator", text: "Sol-by-sol resources, health, morale and systems with seeded, reproducible events." },
@@ -127,6 +127,9 @@ function Index() {
               </Link>
               <Link to="/planner" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-ink2/70 px-5 text-sm font-semibold text-bright transition-colors hover:border-amber/40">
                 <Play className="size-4 text-cyan" /> Plan &amp; simulate
+              </Link>
+              <Link to="/explorer" search={{ mode: "boxwork" }} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-cyan/35 bg-cyan/10 px-5 text-sm font-semibold text-cyan transition-colors hover:border-cyan/60">
+                <Footprints className="size-4" /> Boxwork Marswalk
               </Link>
             </div>
             <div className="mt-7 flex flex-wrap gap-2">

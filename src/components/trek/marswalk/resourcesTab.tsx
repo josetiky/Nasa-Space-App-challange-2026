@@ -109,8 +109,8 @@ export const TOPO_SIM_TOOL: Tool = {
   icon: ICONS.topo,
 };
 
+// El simulador 3D (Unity) ya no es un botón suelto: se abre en la vista «Exploración».
 const TOOLS: readonly Tool[] = [
-  TOPO_SIM_TOOL,
   ...MARS_MAPS.map((m): Tool => {
     const id = MAP_IDS[m.to] ?? "explorer";
     return {
@@ -264,8 +264,8 @@ const REF_GROUPS: readonly RefGroup[] = [
       {
         name: "Mars Topographic EVA · Space Rockstars (Unity WebGL)",
         use: {
-          es: "Nuestro simulador topográfico de Marte, hecho en Unity y publicado como WebGL. Se abre desde Inicio, Misiones y esta sección.",
-          en: "Our Mars topographic simulator, built in Unity and published as WebGL. It opens from Home, Missions and this section.",
+          es: "Nuestro simulador topográfico de Marte, hecho en Unity y publicado como WebGL. Se abre en la vista «Exploración», después de la caminata simulada.",
+          en: "Our Mars topographic simulator, built in Unity and published as WebGL. It opens in the “Exploration” view, right after the simulated walk.",
         },
         url: TOPO_SIM_URL,
       },

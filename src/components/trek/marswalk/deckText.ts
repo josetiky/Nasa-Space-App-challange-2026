@@ -4,14 +4,23 @@
 import type { TrekLang } from "../i18n";
 
 const es = {
-  brandTab: ["Inicio", "MarsWalk", "Simulación", "Misiones", "Referencias", "Proyecto"],
+  brandTab: [
+    "Inicio",
+    "Planea tu caminata",
+    "Caminata simulada",
+    "Exploración",
+    "Historia de los rovers",
+    "Cómo lo hicimos",
+    "Fuentes",
+  ],
   railTips: [
     "Inicio",
-    "MarsWalk",
-    "Simulación y consola",
-    "Misiones y rovers",
-    "Referencias y recursos (material de apoyo)",
-    "Proyecto",
+    "Paso 1 · Planea tu caminata",
+    "Paso 2 · Mira la caminata simulada",
+    "Paso 3 · Sal a explorar Marte en 3D",
+    "Paso 4 · La historia de los rovers",
+    "Paso 5 · Cómo lo hicimos",
+    "Fuentes y material de apoyo",
   ],
   prev: "Sección anterior",
   next: "Sección siguiente",
@@ -61,14 +70,23 @@ const es = {
 export type DeckTexts = typeof es;
 
 const en: DeckTexts = {
-  brandTab: ["Home", "MarsWalk", "Simulation", "Missions", "References", "Project"],
+  brandTab: [
+    "Home",
+    "Plan your walk",
+    "Simulated walk",
+    "Exploration",
+    "Story of the rovers",
+    "How we built it",
+    "Sources",
+  ],
   railTips: [
     "Home",
-    "MarsWalk",
-    "Simulation and console",
-    "Missions and rovers",
-    "References & resources (supporting material)",
-    "Project",
+    "Step 1 · Plan your walk",
+    "Step 2 · Watch the simulated walk",
+    "Step 3 · Explore Mars in 3D",
+    "Step 4 · The story of the rovers",
+    "Step 5 · How we built it",
+    "Sources and supporting material",
   ],
   prev: "Previous section",
   next: "Next section",

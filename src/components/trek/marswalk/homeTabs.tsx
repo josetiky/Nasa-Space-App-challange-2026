@@ -27,13 +27,10 @@ export function InicioTab({
   lang,
   active,
   onStartTour,
-  onOpenTopo,
 }: {
   lang: TrekLang;
   active: boolean;
   onStartTour: () => void;
-  /** Abre el simulador topográfico (Unity WebGL) en una ventana flotante. */
-  onOpenTopo: () => void;
 }) {
   const [run, setRun] = useState(0);
   const chars = useMemo(() => {
@@ -97,7 +94,7 @@ export function InicioTab({
 
         <div className="inicio__cta inicio__reveal">
           <button type="button" className="btn btn--primary" onClick={onStartTour}>
-            {lang === "es" ? "Iniciar recorrido" : "Start the journey"}
+            {lang === "es" ? "Comenzar la misión (Ver video)" : "Start the mission (Watch video)"}
             <span className="btn__icon" aria-hidden="true">
               <svg viewBox="0 0 12 12">
                 <path d="M3 1.8v8.4L10 6z" />
@@ -118,34 +115,17 @@ export function InicioTab({
               <path d="M2.5 2.5v3h3" />
             </svg>
           </button>
-          <button
-            type="button"
-            className="inicio__topo"
-            onClick={onOpenTopo}
-            aria-haspopup="dialog"
-          >
-            <span className="inicio__topoico" aria-hidden="true">
-              <svg viewBox="0 0 48 48">
-                <path d="M5 38 17 18l8 11 6-8 12 17Z" />
-                <path d="M12 38c4-3 8-3 12 0s8 3 12 0" />
-              </svg>
-            </span>
-            <span className="inicio__topotxt">
-              <b>{lang === "es" ? "Explora" : "Explore"}</b>
-              {lang === "es"
-                ? "nuestro simulador topográfico de Marte"
-                : "our Mars topographic simulator"}
-            </span>
-            <svg className="inicio__topoarrow" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3 8h10M9 4l4 4-4 4" />
-            </svg>
-          </button>
         </div>
       </div>
       <p className="inicio__hint t-label inicio__reveal">
         <span aria-hidden="true">⟵</span>{" "}
         {lang === "es" ? "Arrastra para girar Marte" : "Drag to spin Mars"}{" "}
         <span aria-hidden="true">⟶</span>
+        <span className="inicio__swipe">
+          {lang === "es"
+            ? " · Pulsa «Comenzar la misión» para aterrizar y desbloquear la planeación"
+            : " · Press “Start the mission” to land and unlock planning"}
+        </span>
       </p>
     </div>
   );
@@ -160,16 +140,13 @@ export function MissionsTab({
   lang,
   active,
   onOpen,
-  onExplore,
-  onOpenTopo,
+  onNext,
 }: {
   lang: TrekLang;
   active: boolean;
   onOpen: (index: number) => void;
-  /** Abre la ficha directamente en el visor del terreno 3D. */
-  onExplore: (index: number) => void;
-  /** Abre el simulador topográfico (Unity WebGL) en una ventana flotante. */
-  onOpenTopo: () => void;
+  /** Pasa a la siguiente vista ("¿Quieres ver cómo lo hicimos?"). */
+  onNext: () => void;
 }) {
   const [pos, setPos] = useState(7); // empieza en Perseverance, como el PDF de diseño
   const [vw, setVw] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
@@ -277,9 +254,11 @@ export function MissionsTab({
 
   return (
     <div className="mis">
-      <p className="mis__eyebrow t-label">
-        <b>04</b> / {lang === "es" ? "Misiones y rovers" : "Missions and rovers"}
-      </p>
+      <div className="mis__eyebrow">
+        <p className="t-label">
+          <b>04</b> / {lang === "es" ? "La historia de los rovers" : "The story of the rovers"}
+        </p>
+      </div>
 
       <div
         ref={stageRef}
@@ -345,9 +324,10 @@ export function MissionsTab({
             const o = i - pos;
             const a = o * stepA;
             const ao = Math.abs(o);
-            const x = Math.sin(a) * R * 0.78;
-            const z = (1 - Math.cos(a)) * R * 0.42; // los lados se acercan: arco cóncavo
-            const s = 1 + Math.min(ao, 3) * 0.05;
+            const x = Math.sin(a) * R * 0.76;
+            const z = (1 - Math.cos(a)) * R * 0.28; // arco cóncavo suave sin invadir el encabezado
+            const y = ao * 12 + 8; // desciende ligeramente hacia los lados para nunca tapar "04 / THE STORY"
+            const s = 1 + Math.min(ao, 3) * 0.025;
             const blur = Math.round(Math.min(9, Math.pow(ao, 1.25) * 2.2) * 2) / 2;
             return (
               <div
@@ -358,7 +338,7 @@ export function MissionsTab({
                 aria-label={`${mi.name}, ${mi.yearLabel ?? mi.year}`}
                 aria-current={i === current}
                 style={{
-                  transform: `translate3d(${x.toFixed(1)}px, ${(ao * 6).toFixed(1)}px, ${z.toFixed(1)}px) rotateY(${(-a * 0.92).toFixed(4)}rad) scale(${s.toFixed(3)})`,
+                  transform: `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px) rotateY(${(-a * 0.92).toFixed(4)}rad) scale(${s.toFixed(3)})`,
                   opacity: ao > 3.6 ? Math.max(0, 1 - (ao - 3.6) * 1.6) : 1,
                   zIndex: 100 - Math.round(ao * 10),
                   filter: blur
@@ -404,8 +384,8 @@ export function MissionsTab({
           const r = e.currentTarget.getBoundingClientRect();
           setPos(Math.max(0, Math.min(N - 1, ((e.clientX - r.left) / r.width) * (N - 1))));
         }}
-        onPointerUp={(e) => {
-          (e.currentTarget as HTMLElement).dataset["drag"] = "";
+        onPointerUp={() => {
+          (sliderRef.current as HTMLElement | null)?.setAttribute("data-drag", "");
           goTo(Math.round(posRef.current), 0.45);
         }}
         onKeyDown={(e) => {
@@ -437,43 +417,20 @@ export function MissionsTab({
       </div>
 
       <div className="mis__info" aria-live="polite" key={current}>
+        <p className="mis__lead">
+          {lang === "es"
+            ? "Antes de ti, ellos abrieron el camino. Arrastra las tarjetas o usa ← → para conocer cada misión, y toca su imagen para ver su historia y terreno 3D."
+            : "Before you, they paved the way. Drag the cards or use ← → to meet each mission, and click its image to see its story and 3D terrain."}
+        </p>
         <p className="mis__meta t-label">
           {pad(current + 1)} / {pad(N)} · {mt.type} · <b>{m.agency}</b> · {m.yearLabel ?? m.year}
         </p>
         <h2 className="mis__name t-title">{m.name}</h2>
         <p className="mis__desc">{mt.short}</p>
-        <div className="mis__actions">
-          <button
-            type="button"
-            className="btn btn--ghost mis__open"
-            onClick={() => onOpen(current)}
-          >
-            {lang === "es" ? "Abrir ficha completa" : "Open full profile"}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary mis__open"
-            onClick={() => onExplore(current)}
-          >
-            {lang === "es" ? "Explorar terreno 3D" : "Explore 3D terrain"}
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost mis__open mis__topo"
-            onClick={onOpenTopo}
-            aria-haspopup="dialog"
-            title={
-              lang === "es"
-                ? "Explora nuestro simulador topográfico de Marte"
-                : "Explore our Mars topographic simulator"
-            }
-          >
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M5 38 17 18l8 11 6-8 12 17Z" />
-            </svg>
-            {lang === "es" ? "Simulador topográfico" : "Topographic simulator"}
-          </button>
-        </div>
+        <button type="button" className="mw-nextcue" onClick={onNext}>
+          {lang === "es" ? "¿Quieres ver cómo lo hicimos?" : "Want to see how we built it?"}
+          <span aria-hidden="true">↓</span>
+        </button>
       </div>
     </div>
   );
@@ -488,7 +445,6 @@ export function MissionSheet({
   index: number;
   lang: TrekLang;
   onClose: () => void;
-  /** Abre la ficha con el terreno 3D ya ampliado (botón "Explorar" del carrusel). */
   startExploring?: boolean;
 }) {
   const m = MISSIONS[index]!;
@@ -669,12 +625,10 @@ const PJ_FACTS: ReadonlyArray<{ n: string; es: string; en: string }> = [
 export function ProjectTab({
   lang,
   classicLink,
-  onOpenTopo,
   onOpenSources,
 }: {
   lang: TrekLang;
   classicLink?: ReactNode;
-  onOpenTopo: () => void;
   onOpenSources: () => void;
 }) {
   const es = lang === "es";
@@ -682,7 +636,7 @@ export function ProjectTab({
     <div className="pj" data-scroll-lock>
       <header className="pj__head">
         <p className="t-label" data-in>
-          <b>06</b> / {es ? "Proyecto" : "Project"}
+          <b>05</b> / {es ? "¿Quieres ver cómo lo hicimos?" : "Want to see how we built it?"}
         </p>
         <h2 className="pj__title t-title" data-in>
           {es ? "La tripulación" : "The crew"}
@@ -744,16 +698,8 @@ export function ProjectTab({
           ))}
         </ul>
         <div className="pj__actions">
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={onOpenTopo}
-            aria-haspopup="dialog"
-          >
-            {es ? "Abrir el simulador topográfico" : "Open the topographic simulator"}
-          </button>
-          <button type="button" className="btn btn--ghost" onClick={onOpenSources}>
-            {es ? "Ver fuentes y datos" : "See sources and data"}
+          <button type="button" className="btn btn--primary" onClick={onOpenSources}>
+            {es ? "Ver las fuentes y los datos" : "See the sources and data"}
           </button>
         </div>
       </section>

@@ -1,0 +1,318 @@
+/* ================= Guía de misión: barra de pasos, bienvenida y tutorial ================= */
+.mw-ui .mw-stepbar {
+  position: absolute;
+  top: calc(16px + var(--safe-t));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(860px, calc(100vw - 440px));
+  padding: 6px 8px 6px 10px;
+  border-radius: var(--r-pill, 999px);
+}
+.mw-ui .mw-stepbar__where {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  padding: 0 6px;
+  font-size: 13px;
+}
+.mw-ui .mw-stepbar__where b {
+  font: 700 12px/1 var(--f-readmono, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #df8a5d;
+}
+.mw-ui .mw-stepbar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ivory-90, #eee5ca);
+  font-weight: 600;
+}
+.mw-ui .mw-stepbar__prev,
+.mw-ui .mw-stepbar__next,
+.mw-ui .mw-guidebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+.mw-ui .mw-stepbar__prev {
+  background: rgb(238 229 202 / 0.12);
+  color: var(--ivory, #eee5ca);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.3);
+}
+.mw-ui .mw-stepbar__prev:hover:not(:disabled) {
+  background: rgb(238 229 202 / 0.22);
+}
+.mw-ui .mw-stepbar__prev:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.mw-ui .mw-stepbar__next {
+  background: #8fd6b0;
+  color: #04060b;
+  box-shadow: 0 0 18px rgb(143 214 176 / 0.35);
+}
+.mw-ui .mw-stepbar__next:hover:not(:disabled) {
+  background: #a8e4c3;
+}
+.mw-ui .mw-stepbar__next.is-locked,
+.mw-ui .mw-stepbar__next:disabled {
+  background: rgb(238 229 202 / 0.08);
+  color: rgb(238 229 202 / 0.65);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.2);
+  cursor: not-allowed;
+}
+.mw-ui .mw-stepbar__next[data-pulse="true"] {
+  animation: mw-pulse 1.4s ease-in-out infinite;
+}
+/* Botón Tutorial mucho más obvio y visible */
+.mw-ui .mw-guidebtn {
+  height: 36px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #df8a5d, #b9472f);
+  color: #fff8ee;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 0 2px rgb(255 230 200 / 0.35),
+    0 6px 20px rgb(223 138 93 / 0.45);
+}
+.mw-ui .mw-guidebtn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 2px rgb(255 230 200 / 0.6),
+    0 8px 26px rgb(223 138 93 / 0.65);
+}
+.mw-ui .mw-guidebtn__icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(4 6 11 / 0.35);
+  color: #ffd9b3;
+  font-size: 12px;
+}
+@keyframes mw-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(143 214 176 / 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgb(143 214 176 / 0);
+  }
+}
+@media (max-width: 1280px) {
+  .mw-ui .mw-stepbar {
+    max-width: calc(100vw - 360px);
+  }
+  .mw-ui .mw-stepbar__label {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .mw-ui .mw-stepbar {
+    top: auto;
+    bottom: calc(12px + var(--safe-b));
+    max-width: calc(100vw - 130px);
+  }
+  .mw-ui .mw-stepbar__nextlabel,
+  .mw-ui .mw-stepbar__prevlabel {
+    display: none;
+  }
+}
+
+/* Siguiente vista desde el carrusel de rovers */
+.mw-ui .mw-nextcue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(238 229 202 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.22);
+  color: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mw-ui .mw-nextcue span {
+  display: inline-block;
+  animation: mw-bob 1.6s ease-in-out infinite;
+}
+@keyframes mw-bob {
+  50% {
+    transform: translateY(4px);
+  }
+}
+.mw-ui .mis__lead {
+  margin: 2px 0 0;
+  font-size: 14.5px;
+  color: var(--ivory-70, #b9b2a0);
+}
+
+/* Bienvenida */
+.mw-ui .mw-guide-welcome {
+  position: absolute;
+  left: 50%;
+  bottom: calc(84px + var(--safe-b));
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: min(580px, calc(100vw - 32px));
+  padding: 18px 20px;
+  border-radius: 20px;
+  animation: mw-rise 0.6s ease both;
+}
+.mw-ui .mw-guide-helmet {
+  flex: none;
+  width: 56px;
+  height: 56px;
+}
+.mw-ui .mw-guide-welcome__text {
+  display: grid;
+  gap: 8px;
+}
+.mw-ui .mw-guide-welcome h2 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+}
+.mw-ui .mw-guide-welcome p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ivory-90, #eee5ca);
+}
+.mw-ui .mw-guide-welcome small {
+  color: var(--ivory-70, #b9b2a0);
+  font-size: 13px;
+}
+.mw-ui .mw-guide-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@keyframes mw-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+}
+
+/* Recorrido guiado */
+.mw-ui .mw-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+.mw-ui .mw-tour__dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(2 4 8 / 0.62);
+}
+.mw-ui .mw-tour__spot {
+  position: absolute;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px #df8a5d,
+    0 0 0 9999px rgb(2 4 8 / 0.62);
+  transition:
+    top 0.35s ease,
+    left 0.35s ease,
+    width 0.35s ease,
+    height 0.35s ease;
+  pointer-events: none;
+}
+.mw-ui .mw-tour__card {
+  position: absolute;
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgb(9 13 20 / 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgb(238 229 202 / 0.2),
+    0 20px 60px rgb(0 0 0 / 0.5);
+}
+.mw-ui .mw-tour__card.is-center {
+  top: 50%;
+  left: 50%;
+  width: min(440px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+}
+.mw-ui .mw-tour__card h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.mw-ui .mw-tour__card p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.mw-ui .mw-tour__count {
+  margin: 0;
+  color: #df8a5d;
+}
+.mw-ui .mw-tour__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+.mw-ui .mw-tour__nav {
+  display: flex;
+  gap: 8px;
+}
+.mw-ui .mw-tour__skip {
+  border: 0;
+  background: none;
+  color: var(--ivory-70, #b9b2a0);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-ui .mw-stepbar__next[data-pulse="true"],
+  .mw-ui .mw-nextcue span,
+  .mw-ui .mw-guide-welcome {
+    animation: none;
+  }
+}
+
+/* .glass fija position: relative; la guía flota sobre la cubierta */
+.mw-ui .mw-stepbar.glass,
+.mw-ui .mw-guide-welcome.glass {
+  position: absolute;
+}
+.mw-ui .mw-tour__card.glass {
+  position: absolute;
+}
+.mw-ui .mw-guide-welcome.glass {
+  background: rgb(9 13 20 / 0.9);
+}

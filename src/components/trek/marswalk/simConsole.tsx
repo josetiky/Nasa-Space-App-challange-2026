@@ -1,14 +1,12 @@
 /**
  * M.I.Y.H. · 03 Simulación como CONSOLA DE LA NAVE (solo presentación).
  *
- * Misma información que SimTab (panels.tsx), reorganizada para leerse de un vistazo:
- *   izquierda  el mismo IsoMap + avance de la ruta y margen de regreso
- *   derecha    signos del cuerpo y del traje con nombres claros + bitácora del asistente
- *   abajo      reproducir/pausar, velocidad, reiniciar y salud
- *
- * Lee useTrek() y solo emite los mismos eventos que SimTab (onTogglePlay, onSpeed, resetSession).
- * No aplica umbrales: el nivel de alerta lo decide la FSM HUELLA, aquí solo se muestra.
- * SimTab sigue existiendo en panels.tsx por si se quiere volver a la vista anterior.
+ * Incluye guía paso a paso integrada y explicaciones claras de cada panel sin saturar,
+ * permitiendo hacer scroll vertical dentro de la vista sin cambiar de apartado:
+ *   arriba     Guía rápida de 3 pasos para entender cómo correr y completar la simulación
+ *   izquierda  IsoMap 3D + barras explicadas de avance de la ruta y margen de regreso
+ *   derecha    signos del cuerpo, del traje y ambiente explicados + centro de control dinámico
+ *   abajo      controles para subir a Planeación, reproducir/pausar, velocidad, reiniciar y bajar a Unity al terminar
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -41,19 +39,51 @@ import "./planner-console.css";
 
 const C = {
   es: {
-    plate: "NAVE M.I.Y.H. · CONSOLA 3 · CAMINATA",
+    plate: "NAVE M.I.Y.H. · CONSOLA 3 · CAMINATA EN VIVO",
     title: "Caminata",
-    subtitle: "Simulación en vivo",
-    help: "Ayuda",
+    subtitle: "Simulación en vivo paso a paso",
+    help: "Ver globos de ayuda",
+    guideToggleHide: "Ocultar explicación rápida ▴",
+    guideToggleShow: "¿Qué debo hacer aquí? Ver explicación ▾",
+    guideTitle:
+      "¿Cómo funciona la Simulación en Vivo? (Puedes hacer scroll dentro de esta pantalla sin salirte de este apartado)",
+    guideCards: [
+      {
+        n: "1",
+        title: "Inicia y acelera el tiempo (Barra inferior)",
+        desc: "Pulsa el botón grande «Iniciar caminata» abajo a la derecha y usa los botones de Velocidad (×15, ×60 o ×300) para que la caminata avance rápido.",
+      },
+      {
+        n: "2",
+        title: "Vigila el Mapa 3D y los Signos Vitales",
+        desc: "A la izquierda ves al astronauta avanzar sobre el cráter Gale y cuánto oxígeno le queda. A la derecha ves en tiempo real el pulso, el oxígeno y el estado del traje.",
+      },
+      {
+        n: "3",
+        title: "Prueba emergencias y desbloquea Unity",
+        desc: "En el panel inferior derecho puedes provocar tormentas o fallas para ver cómo A* recalcula la ruta. Cuando la caminata llegue al 100%, se desbloqueará el paso al Simulador 3D en Unity.",
+      },
+    ],
     clock: "Tiempo de caminata",
     health: "Salud",
     openHealth: "Salud y contingencias",
     locked: "bloqueado",
+    mapTitle: "1 · Mapa isométrico 3D en vivo y progreso",
+    mapExplain:
+      "El marcador muestra la posición exacta del astronauta sobre el terreno real de Gale. Debajo del mapa puedes vigilar el porcentaje de ruta completada y el oxígeno de reserva.",
     progress: "Avance de la ruta",
+    progressHelp: "Llega al 100% para desbloquear la Exploración 3D en Unity.",
     margin: "Oxígeno de sobra al volver",
-    body: "Cuerpo",
-    suit: "Traje",
-    env: "Ambiente",
+    marginHelp: "Si baja demasiado (<25%), el sistema ordenará regresar al hábitat.",
+    vitalsTitle: "2 · Monitor biométrico y del traje (HUELLA)",
+    vitalsExplain:
+      "Lecturas en vivo del astronauta. Si algún valor sale del rango seguro, la Máquina de Estados (arriba) cambia de NORMAL a PRECAUCIÓN o EMERGENCIA.",
+    body: "Cuerpo (Fisiología del astronauta)",
+    bodyExplain: "Latidos por minuto, saturación de oxígeno en sangre y temperatura interna.",
+    suit: "Traje espacial (Soporte vital)",
+    suitExplain: "Limpieza de CO₂ en el casco, presión del traje, reserva del tanque O₂, ventilador y batería.",
+    env: "Ambiente marciano",
+    envExplain: "Dosis de radiación acumulada durante esta salida extravehicular (EVA).",
     names: {
       hr: "Pulso",
       spo2: "Oxígeno en la sangre",
@@ -66,25 +96,26 @@ const C = {
       dose: "Radiación en esta caminata",
     } as Record<string, string>,
     quality: { stale: "dato viejo", missing: "sin señal", implausible: "dato dudoso" } as Record<string, string>,
-    noSample: "Aún no hay datos: pulsa INICIAR.",
-    assistant: "Asistente",
+    noSample: "Aún no hay lecturas en movimiento: pulsa «Iniciar caminata» abajo a la derecha.",
+    assistant: "Bitácora del asistente",
     voice: "Guía por voz",
     start: "Iniciar caminata",
-    resume: "Continuar",
+    resume: "Continuar caminata",
     pause: "Pausar",
     speed: "Velocidad",
     speedHelp: (s: number) => `1 s real = ${s} s de misión`,
-    reset: "Reiniciar",
+    reset: "Empezar de nuevo",
     next: "Ahora",
+    goToUnity: "↓ Bajar a Exploración 3D (Unity)",
     hint: {
-      idle: "Pulsa INICIAR para ver la caminata simulada.",
-      paused: "Caminata en pausa.",
-      normal: "La caminata avanza. Observa el pulso y el oxígeno.",
-      fatigue: "Fatiga detectada: el sistema ajusta la ruta.",
-      caution: "Precaución: revisa la salud del equipo.",
-      critical: "Emergencia: abre Salud y contingencias.",
-      done: "EVA terminada: el equipo llegó con todas las paradas resueltas.",
-      doneEarly: "EVA terminada antes de lo planeado: el equipo volvió al punto de partida.",
+      idle: "Pulsa «Iniciar caminata» (y elige velocidad ×60 o ×300) para correr la simulación y desbloquear Unity.",
+      paused: "Caminata en pausa. Pulsa «Continuar caminata» para terminar el recorrido.",
+      normal: "La caminata avanza. Observa el pulso, el oxígeno y el avance hacia el 100%.",
+      fatigue: "Fatiga detectada: el sistema reduce el ritmo y ajusta la ruta automáticamente.",
+      caution: "Precaución activa: revisa los signos del equipo o abre Salud y contingencias.",
+      critical: "Emergencia: abre Salud y contingencias para autorizar la decisión humana.",
+      done: "¡Simulación completada! Ya puedes pulsar «Bajar a Exploración 3D (Unity)» para salir a caminar en 3D.",
+      doneEarly: "EVA concluida con retorno seguro al punto de partida. Ya puedes avanzar a Exploración 3D (Unity).",
     },
     tips: {
       map: "El astronauta camina sobre el terreno real de Gale. La línea es su ruta.",
@@ -94,19 +125,51 @@ const C = {
     },
   },
   en: {
-    plate: "M.I.Y.H. SHIP · CONSOLE 3 · WALK",
+    plate: "M.I.Y.H. SHIP · CONSOLE 3 · LIVE WALK",
     title: "The walk",
-    subtitle: "Live simulation",
-    help: "Help",
+    subtitle: "Step-by-step live simulation",
+    help: "Show screen tips",
+    guideToggleHide: "Hide quick guide ▴",
+    guideToggleShow: "What should I do here? Show guide ▾",
+    guideTitle:
+      "How does Live Simulation work? (You can scroll inside this screen without leaving this section)",
+    guideCards: [
+      {
+        n: "1",
+        title: "Start & speed up time (Bottom bar)",
+        desc: "Press the big “Start the walk” button at the bottom right and use the Speed buttons (×15, ×60, or ×300) to fast-forward the walk.",
+      },
+      {
+        n: "2",
+        title: "Watch the 3D Map & Vital Signs",
+        desc: "On the left, watch the astronaut move across Gale crater and track spare oxygen. On the right, monitor heart rate, blood oxygen, and suit status in real time.",
+      },
+      {
+        n: "3",
+        title: "Test emergencies & unlock Unity",
+        desc: "In the bottom-right panel you can trigger storms or suit faults to see how A* replans automatically. When progress reaches 100%, the Unity 3D Simulator unlocks.",
+      },
+    ],
     clock: "Walk time",
     health: "Health",
     openHealth: "Health & contingencies",
     locked: "locked",
+    mapTitle: "1 · Live 3D isometric map & progress",
+    mapExplain:
+      "The pin shows the astronaut's exact position on real Gale terrain. Below the map you can track route completion percentage and reserve oxygen.",
     progress: "Route progress",
+    progressHelp: "Reach 100% to unlock 3D Exploration in Unity.",
     margin: "Oxygen to spare on return",
-    body: "Body",
-    suit: "Suit",
-    env: "Environment",
+    marginHelp: "If it drops too low (<25%), the system orders a return to the habitat.",
+    vitalsTitle: "2 · Biometric & suit monitor (HUELLA)",
+    vitalsExplain:
+      "Live readings from the astronaut. If any value leaves the safe range, the State Machine (top) shifts from NORMAL to CAUTION or EMERGENCY.",
+    body: "Body (Astronaut physiology)",
+    bodyExplain: "Heart rate (bpm), blood oxygen saturation, and core body temperature.",
+    suit: "Spacesuit (Life support)",
+    suitExplain: "Helmet CO₂ scrubbing, suit pressure, O₂ tank reserve, fan, and battery.",
+    env: "Martian environment",
+    envExplain: "Cumulative radiation dose absorbed during this extravehicular activity (EVA).",
     names: {
       hr: "Heart rate",
       spo2: "Blood oxygen",
@@ -119,25 +182,26 @@ const C = {
       dose: "Radiation this walk",
     } as Record<string, string>,
     quality: { stale: "old data", missing: "no signal", implausible: "doubtful" } as Record<string, string>,
-    noSample: "No data yet: press START.",
-    assistant: "Assistant",
+    noSample: "No live readings yet: press “Start the walk” at the bottom right.",
+    assistant: "Assistant log",
     voice: "Voice guide",
     start: "Start the walk",
-    resume: "Resume",
+    resume: "Resume walk",
     pause: "Pause",
     speed: "Speed",
     speedHelp: (s: number) => `1 real s = ${s} mission s`,
-    reset: "Reset",
+    reset: "Start over",
     next: "Now",
+    goToUnity: "↓ Go down to 3D Exploration (Unity)",
     hint: {
-      idle: "Press START to watch the simulated walk.",
-      paused: "Walk paused.",
-      normal: "The walk is under way. Watch heart rate and oxygen.",
-      fatigue: "Fatigue detected: the system adjusts the route.",
-      caution: "Caution: check the crew's health.",
-      critical: "Emergency: open Health & contingencies.",
-      done: "EVA complete: the crew arrived with every stop resolved.",
-      doneEarly: "EVA ended early: the crew went back to the start.",
+      idle: "Press “Start the walk” (and pick ×60 or ×300 speed) to run the simulation and unlock Unity.",
+      paused: "Walk paused. Press “Resume walk” to complete the traverse.",
+      normal: "The walk is under way. Watch heart rate, oxygen, and progress toward 100%.",
+      fatigue: "Fatigue detected: the system slows the pace and adjusts the route automatically.",
+      caution: "Caution active: check crew vitals or open Health & contingencies.",
+      critical: "Emergency: open Health & contingencies to authorize the human decision.",
+      done: "Simulation complete! You can now press “Go down to 3D Exploration (Unity)” to step out in 3D.",
+      doneEarly: "EVA concluded with a safe return to start. You can now advance to 3D Exploration (Unity).",
     },
     tips: {
       map: "The astronaut walks over Gale's real terrain. The line is the route.",
@@ -148,10 +212,10 @@ const C = {
   },
 } as const;
 
-const GROUPS: ReadonlyArray<["body" | "suit" | "env", readonly string[]]> = [
-  ["body", ["spo2", "core"]],
-  ["suit", ["co2", "press", "o2pri", "fan", "batt"]],
-  ["env", ["dose"]],
+const GROUPS: ReadonlyArray<["body" | "suit" | "env", "bodyExplain" | "suitExplain" | "envExplain", readonly string[]]> = [
+  ["body", "bodyExplain", ["spo2", "core"]],
+  ["suit", "suitExplain", ["co2", "press", "o2pri", "fan", "batt"]],
+  ["env", "envExplain", ["dose"]],
 ];
 
 const fmt0 = (n: number) => (Number.isFinite(n) ? n.toFixed(0) : "—");
@@ -196,7 +260,7 @@ function Vital({ v, name, qualityWords, wide }: { v: VitalReading; name: string;
   );
 }
 
-/** Bitácora del asistente (misma fuente que AssistantPanel: replanLog + historial de la FSM). */
+/** Bitácora del asistente (replanLog + historial de la FSM). */
 function AssistantLog({ title, voiceLabel }: { title: string; voiceLabel: string }) {
   const state = useTrek();
   const t = MW_TEXTS[state.lang];
@@ -281,11 +345,17 @@ export function SimConsoleTab({
   onOpenConfirm,
   onOpenEnv,
   onRunScenario,
+  onGoUp,
+  onGoNext,
+  simDone,
 }: {
   onOpenHealth: () => void;
   onRunScenario?: (id: string) => void;
   onOpenConfirm?: () => void;
   onOpenEnv?: () => void;
+  onGoUp?: () => void;
+  onGoNext?: () => void;
+  simDone?: boolean;
   playing: boolean;
   onTogglePlay: () => void;
   speed: Speed;
@@ -301,6 +371,7 @@ export function SimConsoleTab({
   const { fsm, latestTelemetryRow, clockS, routeResult: rr } = session;
   const locked = isHumanLockActive(state);
   const [help, setHelp] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
   useEffect(() => ensureReadableFonts(), []);
 
   const vitals = vitalsFromRow(latestTelemetryRow);
@@ -309,8 +380,6 @@ export function SimConsoleTab({
   const homeAgain =
     session.returning &&
     Math.hypot(session.position.x - session.origin.x, session.position.z - session.origin.z) < 1.5;
-  // Avance real: metros recorridos sobre (recorridos + lo que falta de la ruta activa). Con paradas
-  // científicas cuenta el tiempo de EVA: el trabajo en las paradas también es avance de la misión.
   const remainingM = session.activeRoute?.distanceM ?? 0;
   const elapsedMin = session.resources.evaElapsedMin;
   const remainingMin = (session.activeRoute?.durationMin ?? 0) + remainingDwellMin(session);
@@ -324,6 +393,7 @@ export function SimConsoleTab({
         : 0;
   const marginPct = rr.ok ? rr.resourcePlan.returnMarginPct : Number.NaN;
   const rank = healthRank(fsm.state);
+  const isComplete = walkComplete(session) || Boolean(simDone);
 
   const hint = walkComplete(session)
     ? session.returning || session.stopIdx < session.stops.length
@@ -341,7 +411,6 @@ export function SimConsoleTab({
               ? c.hint.paused
               : c.hint.idle;
   const ctaLabel = playing ? c.pause : clockS > 0 ? c.resume : c.start;
-  // Misión individual: astronauta en vivo con máquina de estados visible y fallas en el camino
   const solo = session.missionProfile === "solo" && session.live !== null;
 
   return (
@@ -368,6 +437,14 @@ export function SimConsoleTab({
             <b>{missionClock(clockS)}</b>
           </span>
           <div className="mws__headright">
+            <button
+              type="button"
+              className="mwc__chipbtn"
+              aria-expanded={showGuide}
+              onClick={() => setShowGuide((v) => !v)}
+            >
+              {showGuide ? c.guideToggleHide : c.guideToggleShow}
+            </button>
             <button type="button" className="mws__healthbtn" data-state={fsm.state} onClick={onOpenHealth}>
               <span className="mws__shape" aria-hidden="true" />
               <span>
@@ -386,97 +463,131 @@ export function SimConsoleTab({
           <DataProvenance />
         </header>
 
-        <div className="mws__body">
-          {/* ---------- Mapa ---------- */}
-          <section className="mws__map" aria-label={`${siteInfo.name}`}>
-            <p className="mws__maptag">
-              <b>{siteInfo.name}</b> · {siteInfo.dataType} · {siteInfo.resolutionM} m
-            </p>
-            {session.returning ? (
-              <p className="mws__returning" role="status" data-home={homeAgain ? "true" : undefined}>
-                {homeAgain
-                  ? lang === "es"
-                    ? "✓ De vuelta en el punto de partida. Pulsa «Recalcular con A*» para intentar el destino otra vez."
-                    : "✓ Back at the starting point. Press «Recompute with A*» to try the goal again."
-                  : lang === "es"
-                    ? "↩ Regresando al punto de partida: la ruta al destino se volvió inadmisible"
-                    : "↩ Returning to start: the route to the goal became inadmissible"}
-              </p>
-            ) : null}
-            {onOpenEnv ? (
-              <div className="mws__envchip">
-                <MarsEnvChip onOpen={onOpenEnv} />
+        <div className="mwc__scroll" data-scroll-lock>
+          {showGuide ? (
+            <section className="mwc__guide-strip" aria-label={c.guideTitle}>
+              <p className="mwc__guide-heading">{c.guideTitle}</p>
+              <div className="mwc__guide-grid">
+                {c.guideCards.map((g) => (
+                  <div key={g.n} className="mwc__guide-card">
+                    <span className="mwc__guide-num">{g.n}</span>
+                    <div>
+                      <b>{g.title}</b>
+                      <p>{g.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ) : null}
-            <IsoMap />
-            {help ? (
-              <p className="mwc__tip mwc__tip--map">
-                <b>1</b> {c.tips.map}
-              </p>
-            ) : null}
-            <div className="mws__meters">
-              <div className="mws__meter">
-                <span>
-                  {c.progress} <b>{Math.round(progress * 100)} %</b>
-                </span>
-                <span className="mwc__bar" aria-hidden="true">
-                  <i style={{ width: `${progress * 100}%` }} />
-                </span>
-              </div>
-              <div className="mws__meter">
-                <span>
-                  {c.margin} <b>{rr.ok ? `${fmt0(marginPct)} %` : "—"}</b>
-                </span>
-                <span className="mwc__bar" aria-hidden="true">
-                  <i
-                    style={{ width: `${rr.ok ? Math.max(0, Math.min(100, marginPct)) : 0}%` }}
-                    data-high={rr.ok && marginPct < 25 ? "true" : undefined}
-                  />
-                </span>
-              </div>
-            </div>
-            {session.stops.length > 0 ? <TourPanel compact /> : null}
-          </section>
+            </section>
+          ) : null}
 
-          {/* ---------- Signos + asistente ---------- */}
-          <div className="mws__side">
-            <section className="mws__vitals" aria-label={t.healthTitle}>
-              <HuellaSourcePicker />
-              {hr ? (
-                <div className="mws__hr">
-                  <Vital v={hr} name={c.names["hr"] ?? hr.label} qualityWords={c.quality} wide />
-                  <Spark values={hrHistory} />
-                </div>
-              ) : null}
-              {GROUPS.map(([g, ids]) => (
-                <div key={g} className="mws__group">
-                  <h3 className="mws__ghead">{c[g]}</h3>
-                  <div className="mws__grid">
-                    {ids.map((id) => {
-                      const v = byId.get(id);
-                      return v ? <Vital key={id} v={v} name={c.names[id] ?? v.label} qualityWords={c.quality} /> : null;
-                    })}
+          <div className="mws__body">
+            {/* ---------- 1. Mapa Isométrico ---------- */}
+            <section className="mws__map-wrap" aria-label={`${siteInfo.name}`}>
+              <div className="mwc__map-explain">
+                <h3>{c.mapTitle}</h3>
+                <p>{c.mapExplain}</p>
+              </div>
+              <div className="mws__map">
+                <p className="mws__maptag">
+                  <b>{siteInfo.name}</b> · {siteInfo.dataType} · {siteInfo.resolutionM} m
+                </p>
+                {session.returning ? (
+                  <p className="mws__returning" role="status" data-home={homeAgain ? "true" : undefined}>
+                    {homeAgain
+                      ? lang === "es"
+                        ? "✓ De vuelta en el punto de partida. Pulsa «Recalcular la ruta» para intentar el destino otra vez."
+                        : "✓ Back at the starting point. Press «Recalculate the route» to try the goal again."
+                      : lang === "es"
+                        ? "↩ Regresando al punto de partida: la ruta al destino se volvió inadmisible"
+                        : "↩ Returning to start: the route to the goal became inadmissible"}
+                  </p>
+                ) : null}
+                {onOpenEnv ? (
+                  <div className="mws__envchip">
+                    <MarsEnvChip onOpen={onOpenEnv} />
+                  </div>
+                ) : null}
+                <IsoMap />
+                {help ? (
+                  <p className="mwc__tip mwc__tip--map">
+                    <b>1</b> {c.tips.map}
+                  </p>
+                ) : null}
+                <div className="mws__meters">
+                  <div className="mws__meter">
+                    <span>
+                      {c.progress} <b>{Math.round(progress * 100)} %</b>
+                    </span>
+                    <span className="mwc__bar" aria-hidden="true">
+                      <i style={{ width: `${progress * 100}%` }} />
+                    </span>
+                    <small className="mwc__stat-help">{c.progressHelp}</small>
+                  </div>
+                  <div className="mws__meter">
+                    <span>
+                      {c.margin} <b>{rr.ok ? `${fmt0(marginPct)} %` : "—"}</b>
+                    </span>
+                    <span className="mwc__bar" aria-hidden="true">
+                      <i
+                        style={{ width: `${rr.ok ? Math.max(0, Math.min(100, marginPct)) : 0}%` }}
+                        data-high={rr.ok && marginPct < 25 ? "true" : undefined}
+                      />
+                    </span>
+                    <small className="mwc__stat-help">{c.marginHelp}</small>
                   </div>
                 </div>
-              ))}
-              {latestTelemetryRow ? null : <p className="mwc__help">{c.noSample}</p>}
+                {session.stops.length > 0 ? <TourPanel compact /> : null}
+              </div>
+            </section>
+
+            {/* ---------- 2. Signos + 3. Centro de Control Dinámico ---------- */}
+            <div className="mws__side">
+              <section className="mws__vitals" aria-label={t.healthTitle}>
+                <div className="mwc__colhead">
+                  <h3>{c.vitalsTitle}</h3>
+                </div>
+                <p className="mwc__sec-explain">{c.vitalsExplain}</p>
+                <HuellaSourcePicker />
+                {hr ? (
+                  <div className="mws__hr">
+                    <Vital v={hr} name={c.names["hr"] ?? hr.label} qualityWords={c.quality} wide />
+                    <Spark values={hrHistory} />
+                  </div>
+                ) : null}
+                {GROUPS.map(([g, explainKey, ids]) => (
+                  <div key={g} className="mws__group">
+                    <h3 className="mws__ghead">{c[g]}</h3>
+                    <p className="mwc__stat-help">{c[explainKey]}</p>
+                    <div className="mws__grid">
+                      {ids.map((id) => {
+                        const v = byId.get(id);
+                        return v ? (
+                          <Vital key={id} v={v} name={c.names[id] ?? v.label} qualityWords={c.quality} />
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {latestTelemetryRow ? null : <p className="mwc__help">{c.noSample}</p>}
+                {help ? (
+                  <p className="mwc__tip mwc__tip--inline">
+                    <b>2</b> {c.tips.vitals}
+                  </p>
+                ) : null}
+              </section>
+              <DynamicDock
+                solo={solo}
+                assistant={<AssistantLog title={c.assistant} voiceLabel={c.voice} />}
+                {...(onOpenConfirm ? { onOpenConfirm } : {})}
+                {...(onRunScenario ? { onRunScenario } : {})}
+              />
               {help ? (
                 <p className="mwc__tip mwc__tip--inline">
-                  <b>2</b> {c.tips.vitals}
+                  <b>3</b> {c.tips.assistant}
                 </p>
               ) : null}
-            </section>
-            <DynamicDock
-              solo={solo}
-              assistant={<AssistantLog title={c.assistant} voiceLabel={c.voice} />}
-              {...(onOpenConfirm ? { onOpenConfirm } : {})}
-              {...(onRunScenario ? { onRunScenario } : {})}
-            />
-            {help ? (
-              <p className="mwc__tip mwc__tip--inline">
-                <b>3</b> {c.tips.assistant}
-              </p>
-            ) : null}
+            </div>
           </div>
         </div>
 
@@ -486,6 +597,11 @@ export function SimConsoleTab({
             {hint}
           </p>
           <div className="mwc__actions">
+            {onGoUp ? (
+              <button type="button" className="btn btn--ghost mwc__btn" onClick={onGoUp}>
+                ↑ {lang === "es" ? "Subir a Planeación" : "Go up to Planning"}
+              </button>
+            ) : null}
             <div className="mws__speed" role="group" aria-label={c.speed}>
               <span>{c.speed}</span>
               {SPEEDS.map((s) => (
@@ -499,7 +615,7 @@ export function SimConsoleTab({
               className="btn btn--ghost mwc__btn"
               onClick={() => computeOptimalRoute()}
             >
-              {lang === "es" ? "⟳ Recalcular con A*" : "⟳ Recompute with A*"}
+              {lang === "es" ? "⟳ Recalcular la ruta" : "⟳ Recalculate the route"}
             </button>
             <button
               type="button"
@@ -522,6 +638,11 @@ export function SimConsoleTab({
               )}
               {ctaLabel}
             </button>
+            {isComplete && onGoNext ? (
+              <button type="button" className="mwc__cta is-live mwc__cta--next" onClick={onGoNext}>
+                {c.goToUnity}
+              </button>
+            ) : null}
           </div>
           {help ? (
             <p className="mwc__tip mwc__tip--foot">
@@ -534,7 +655,6 @@ export function SimConsoleTab({
   );
 }
 
-
 const INCIDENTS = [
   "fatiga_progresiva",
   "estres_termico",
@@ -545,14 +665,6 @@ const INCIDENTS = [
 
 type DockTab = "assistant" | "events" | "health" | "astar";
 
-/**
- * Datos dinámicos de la caminata, siempre visibles en la consola 03:
- *   Asistente     bitácora de replanificación + FSM (misión individual)
- *   Eventos       escenarios e inyección de eventos SIMULADOS → el mapa y A* reaccionan en vivo
- *   Salud         parámetros del astronauta en vivo (editables) o activarlo
- *   A*            pesos fisiológicos dinámicos + perfil de pesos del costo
- * Solo emite los mismos dispatchTrek(...) que HealthTab / SoloConsole / WeightTuner.
- */
 function DynamicDock({
   solo,
   assistant,
@@ -577,8 +689,27 @@ function DynamicDock({
     ["astar", es ? "A* · pesos" : "A* · weights"],
   ];
 
+  const tabExplain: Record<DockTab, string> = {
+    assistant: es
+      ? "Aquí el sistema registra y narra en tiempo real cada cambio de salud o desvío de ruta."
+      : "Here the system logs and narrates every health change or route detour in real time.",
+    events: es
+      ? "Pon a prueba al sistema disparando tormentas solares, fallas del traje o escenarios guiados."
+      : "Stress-test the system by triggering solar storms, suit faults, or guided scenarios.",
+    health: es
+      ? "Ajusta las características físicas del astronauta o cambia la fuente de datos HUELLA."
+      : "Adjust the astronaut's physical parameters or switch the HUELLA telemetry source.",
+    astar: es
+      ? "Observa cómo los pesos del algoritmo A* se adaptan solos cuando sube el cansancio o el riesgo."
+      : "Watch how the A* algorithm weights adapt automatically when fatigue or risk rises.",
+  };
+
   return (
-    <section className="mws__dock" aria-label={es ? "Datos dinámicos" : "Dynamic data"}>
+    <section className="mws__dock" aria-label={es ? "3 · Centro de control dinámico" : "3 · Dynamic control center"}>
+      <div className="mws__dockhead">
+        <h3>{es ? "3 · Centro de control dinámico (Opcional)" : "3 · Dynamic control center (Optional)"}</h3>
+        <p>{tabExplain[tab]}</p>
+      </div>
       <div className="mws__docktabs" role="tablist">
         {tabs.map(([id, label]) => (
           <button
@@ -610,8 +741,8 @@ function DynamicDock({
             <h4 className="mws__dockh">{es ? "Eventos manuales" : "Manual events"}</h4>
             <p className="mwc__help">
               {es
-                ? "Datos SIMULADOS: cada evento cambia el mapa, la salud y la ruta A* en tiempo real."
-                : "SIMULATED data: each event changes the map, health and the A* route in real time."}
+                ? "Datos SIMULADOS: toca cualquier botón para inyectar un incidente y ver cómo reaccionan el mapa, la salud y la ruta A* en vivo."
+                : "SIMULATED data: tap any button to inject an incident and see how the map, health, and A* route react live."}
             </p>
             {onRunScenario ? (
               <>
@@ -735,7 +866,6 @@ function DynamicDock({
     </section>
   );
 }
-
 
 /** Eventos automáticos según precedentes reales (core/trek/sim/historicalEvents.ts). */
 function AutoEvents({ es }: { es: boolean }) {

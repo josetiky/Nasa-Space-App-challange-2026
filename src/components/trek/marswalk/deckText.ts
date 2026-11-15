@@ -4,8 +4,15 @@
 import type { TrekLang } from "../i18n";
 
 const es = {
-  brandTab: ["Inicio", "MarsWalk", "Simulación", "Misiones", "Proyecto"],
-  railTips: ["Inicio", "MarsWalk", "Simulación y consola", "Misiones y rovers", "Proyecto"],
+  brandTab: ["Inicio", "MarsWalk", "Simulación", "Misiones", "Referencias", "Proyecto"],
+  railTips: [
+    "Inicio",
+    "MarsWalk",
+    "Simulación y consola",
+    "Misiones y rovers",
+    "Referencias y recursos (material de apoyo)",
+    "Proyecto",
+  ],
   prev: "Sección anterior",
   next: "Sección siguiente",
   classic: "Vista clásica",
@@ -54,8 +61,15 @@ const es = {
 export type DeckTexts = typeof es;
 
 const en: DeckTexts = {
-  brandTab: ["Home", "MarsWalk", "Simulation", "Missions", "Project"],
-  railTips: ["Home", "MarsWalk", "Simulation and console", "Missions and rovers", "Project"],
+  brandTab: ["Home", "MarsWalk", "Simulation", "Missions", "References", "Project"],
+  railTips: [
+    "Home",
+    "MarsWalk",
+    "Simulation and console",
+    "Missions and rovers",
+    "References & resources (supporting material)",
+    "Project",
+  ],
   prev: "Previous section",
   next: "Next section",
   classic: "Classic view",

@@ -576,7 +576,7 @@ export function ProjectTab({ lang, classicLink }: { lang: TrekLang; classicLink?
     <div className="pj" data-scroll-lock>
       <header className="pj__head">
         <p className="t-label" data-in>
-          <b>05</b> / {es ? "Proyecto" : "Project"}
+          <b>06</b> / {es ? "Proyecto" : "Project"}
         </p>
         <h2 className="pj__title t-title" data-in>
           {es ? "La tripulación" : "The crew"}

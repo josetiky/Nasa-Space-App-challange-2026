@@ -1,12 +1,10 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Environment,
-  Html,
   Lightformer,
   Line,
   OrbitControls,
   useGLTF,
-  useProgress,
 } from "@react-three/drei";
 import {
   AlertTriangle,
@@ -193,14 +191,52 @@ function positionFromCoordinates(latitude: number, longitude: number, radius = 1
   );
 }
 
-function ModelLoader() {
-  const { progress } = useProgress();
+/** Selected-site label as a camera-facing canvas sprite (drei <Html> created a React root per label and raced unmounts). */
+function SiteNameSprite({ text }: { text: string }) {
+  const { texture, aspect } = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    const font = "600 36px ui-monospace, SFMono-Regular, Menlo, monospace";
+    ctx.font = font;
+    const label = text.toUpperCase();
+    const width = Math.ceil(ctx.measureText(label).width) + 40;
+    canvas.width = width;
+    canvas.height = 60;
+    ctx.font = font;
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.strokeStyle = "rgba(217,119,6,0.6)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(2, 2, width - 4, 56, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#b45309";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, 20, 32);
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return { texture: t, aspect: width / 60 };
+  }, [text]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  const height = 0.08;
   return (
-    <Html center>
-      <div className="whitespace-nowrap rounded-md border border-line bg-white/95 px-3 py-2 font-mono text-[11px] text-cyan">
-        LOADING MARS {Math.round(progress)}%
-      </div>
-    </Html>
+    <sprite position={[0, 0.13, 0]} scale={[height * aspect, height, 1]} renderOrder={10}>
+      <spriteMaterial map={texture} depthTest={false} transparent />
+    </sprite>
+  );
+}
+
+/** In-scene loading placeholder (a drei <Html> fallback here raced React 19 unmounts: removeChild errors). */
+function ModelLoader() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += Math.min(delta, 0.05) * 1.5;
+  });
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[0.9, 18, 12]} />
+      <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.35} />
+    </mesh>
   );
 }
 
@@ -259,17 +295,17 @@ function RegionalMarsModel({ modelId }: { modelId: (typeof REGIONAL_MODELS)[numb
 }
 
 class ModelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
-  componentDidCatch() {
+  override componentDidCatch() {
     // The downloaded project may not include Lovable's hosted GLB asset.
   }
 
-  render() {
+  override render() {
     return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
@@ -377,11 +413,7 @@ function LocationMarkers({
               </mesh>
             )}
             {selected && (
-              <Html distanceFactor={5} position={[0, 0.13, 0]}>
-                <div className="pointer-events-none rounded border border-amber/40 bg-white/95 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-amber shadow-2xl">
-                  {site.name}
-                </div>
-              </Html>
+              <SiteNameSprite text={site.name} />
             )}
           </group>
         );
@@ -606,7 +638,7 @@ export function MarsExplorer({ initialModelView = "globe", immersive = false }: 
             </div>
             <div className="rounded-xl border border-amber/25 bg-[#0a1420]/82 px-3 py-2 text-right text-white shadow-lg backdrop-blur-xl">
               <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-amber">Data mode</p>
-              <p className="mt-1 font-mono text-[10px] text-bright">SIMULATION / NASA READY</p>
+              <p className="mt-1 font-mono text-[10px] text-bright">DEMO SCORES · NOT NASA DATA</p>
             </div>
           </div>
 
@@ -617,7 +649,7 @@ export function MarsExplorer({ initialModelView = "globe", immersive = false }: 
                   <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-cyan">Regional terrain library</p>
                   <p className="mt-0.5 font-display text-sm font-semibold text-white">Choose a dataset to inspect</p>
                 </div>
-                <span className="rounded-full border border-amber/30 bg-amber/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[.1em] text-amber">7 NASA-ready models</span>
+                <span className="rounded-full border border-amber/30 bg-amber/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[.1em] text-amber">7 regional 3D models (visual reference)</span>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
                 {REGIONAL_MODELS.map((model) => {

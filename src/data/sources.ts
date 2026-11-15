@@ -1,0 +1,183 @@
+/**
+ * NASA (and partner) data-source registry shown in the NASA Data Center.
+ * Status values are filled at runtime by the adapters in src/services/nasa.
+ */
+export type SourceId = "mola" | "trek" | "hirise" | "rems" | "traverses" | "donki" | "imagery" | "accessMars" | "openData" | "roverPhotos" | "insight";
+
+export interface DataSource {
+  id: SourceId;
+  name: string;
+  provider: string;
+  mission: string;
+  endpoint: string;
+  format: string;
+  access: string;
+  terms: string;
+  usedFor: string[];
+  limitations: string[];
+  snapshot?: string;
+  integration: "live+snapshot" | "live" | "snapshot" | "bundled-asset" | "not-used" | "metadata";
+  docs: string;
+}
+
+export const DATA_SOURCES: DataSource[] = [
+  {
+    id: "mola",
+    name: "MOLA Mission Experiment Gridded Data Record (MEGDR)",
+    provider: "NASA PDS Geosciences Node (Washington University in St. Louis)",
+    mission: "Mars Global Surveyor · MOLA",
+    endpoint: "https://pds-geosciences.wustl.edu/mgs/urn-nasa-pds-mgs_mola_topography_derived/meg004/megt90n000cb.img",
+    format: "PDS raw image, 1440×720 MSB int16 (m), PDS3/PDS4 labels",
+    access: "Public HTTPS; no CORS → served through /api/nasa/mola or a local snapshot",
+    terms: "NASA PDS data are public domain (U.S. Government work); cite DOI 10.17189/1519460",
+    usedFor: ["Elevation layer", "Slope and hazard layers", "Pressure / radiation shielding model", "Globe relief", "Site analysis"],
+    limitations: ["4 px/deg (~15 km) — too coarse for EVA-scale slopes", "Medians per cell smooth small craters", "Areoid-referenced heights"],
+    snapshot: "/data/nasa/mola/megt90n000cb_int16le.bin",
+    integration: "live+snapshot",
+    docs: "https://pds-geosciences.wustl.edu/missions/mgs/megdr.html",
+  },
+  {
+    id: "trek",
+    name: "Mars Trek WMTS tile services",
+    provider: "NASA Solar System Treks (JPL)",
+    mission: "Viking Orbiters (MDIM 2.1) · MGS MOLA colour shaded relief",
+    endpoint: "https://trek.nasa.gov/tiles/Mars/EQ/{layer}/1.0.0/default/default028mm/{z}/{row}/{col}.jpg",
+    format: "OGC WMTS JPEG tiles, equirectangular (2×1 tiles at zoom 0)",
+    access: "Public HTTPS with CORS",
+    terms: "NASA imagery; credit NASA/JPL-Caltech/USGS",
+    usedFor: ["Globe and atlas basemaps (Viking colour mosaic, MOLA shaded relief)"],
+    limitations: ["Online only unless tiles are saved with npm run data:fetch", "Imagery mosaics are not radiometrically calibrated"],
+    snapshot: "/data/nasa/trek/",
+    integration: "live+snapshot",
+    docs: "https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars",
+  },
+  {
+    id: "rems",
+    name: "Curiosity REMS daily weather",
+    provider: "NASA/JPL-Caltech · Centro de Astrobiología (CSIC-INTA)",
+    mission: "Mars Science Laboratory · REMS",
+    endpoint: "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json",
+    format: "JSON, one record per sol (min/max air & ground temperature, pressure, UV, opacity)",
+    access: "Public HTTPS with CORS; trimmed by /api/nasa/rems",
+    terms: "NASA/JPL public data; credit NASA/JPL-Caltech/CAB(CSIC-INTA)",
+    usedFor: ["Real weather at Gale", "Calibration of the temperature and pressure model", "Overview widget"],
+    limitations: ["Single location (Gale crater)", "Gaps when the instrument is off", "Opacity is categorical, not an optical depth"],
+    snapshot: "/data/nasa/rems/msl_rems_weather.json",
+    integration: "live+snapshot",
+    docs: "https://mars.nasa.gov/msl/weather/",
+  },
+  {
+    id: "traverses",
+    name: "Rover traverses (MMGIS)",
+    provider: "NASA/JPL-Caltech MMGIS",
+    mission: "Mars 2020 Perseverance · MSL Curiosity",
+    endpoint: "https://mars.nasa.gov/mmgis-maps/{M20|MSL}/Layers/json/{M20_traverse|M20_waypoints|MSL_traverse|MSL_waypoints}.json",
+    format: "GeoJSON (LineString / MultiLineString / Point)",
+    access: "Public HTTPS with CORS",
+    terms: "NASA/JPL public data",
+    usedFor: ["Exploration-routes layer", "Real context for planned EVAs", "Boxwork Marswalk: 62 Curiosity waypoints (position, elevation, tilt, odometry), sols 4530–4711, bundled in src/data/boxwork.ts"],
+    limitations: ["Localisation updates can lag the latest drives", "Simplified for display (Douglas–Peucker ~1 m)", "Waypoint elevations over short legs amplify localisation errors (grades are labelled as derived)"],
+    snapshot: "/data/nasa/traverses/",
+    integration: "live+snapshot",
+    docs: "https://mars.nasa.gov/maps/location/?mission=M20",
+  },
+  {
+    id: "donki",
+    name: "DONKI solar energetic particle events",
+    provider: "NASA CCMC · api.nasa.gov",
+    mission: "Space weather (heliophysics)",
+    endpoint: "https://api.nasa.gov/DONKI/SEP?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=…",
+    format: "JSON event list",
+    access: "API key (server-side via /api/nasa/donki); DEMO_KEY is rate-limited",
+    terms: "NASA open API terms",
+    usedFor: ["SEP frequency in the simulator", "Space-weather panel"],
+    limitations: ["Events observed near Earth; Mars geometry differs (handled statistically)", "Returned 503/timeouts during testing with DEMO_KEY"],
+    snapshot: "/data/nasa/donki/sep.json",
+    integration: "live+snapshot",
+    docs: "https://ccmc.gsfc.nasa.gov/tools/DONKI/",
+  },
+  {
+    id: "imagery",
+    name: "NASA Image and Video Library",
+    provider: "NASA",
+    mission: "All missions",
+    endpoint: "https://images-api.nasa.gov/search?q={site}&media_type=image",
+    format: "JSON (Collection+JSON)",
+    access: "Public HTTPS with CORS, no key",
+    terms: "Generally not copyrighted; check each item's credit",
+    usedFor: ["Point-of-view and orbital images for the selected site", "Rover images of boxwork stops (PIA26558, PIA26559 assets)"],
+    limitations: ["Keyword search — results are not georeferenced"],
+    integration: "live",
+    docs: "https://images.nasa.gov/docs/images.nasa.gov_api_docs.pdf",
+  },
+  {
+    id: "hirise",
+    name: "HiRISE Curiosity roving-site mosaic",
+    provider: "NASA Solar System Treks (JPL) · HiRISE: NASA/JPL/University of Arizona",
+    mission: "Mars Reconnaissance Orbiter · HiRISE",
+    endpoint: "https://trek.nasa.gov/tiles/Mars/EQ/curiosity_hirise_mosaic/1.0.0/default/default028mm/{z}/{row}/{col}.png",
+    format: "OGC WMTS PNG tiles, equirectangular; zoom ≤ 16 (≈0.64 m per pixel)",
+    access: "Public HTTPS (tiles load as images, no key)",
+    terms: "NASA imagery; credit NASA/JPL/University of Arizona",
+    usedFor: ["Basemap of the boxwork Marswalk (Explorer → Boxwork EVA)"],
+    limitations: ["Covers 137.12–137.73°E, 4.25–4.93°S only", "Imagery only — no elevations", "Registration with rover waypoints is not guaranteed to the metre"],
+    integration: "live",
+    docs: "https://trek.nasa.gov/mars/",
+  },
+  {
+    id: "accessMars",
+    name: "Access Mars surface terrain",
+    provider: "Google Creative Lab with NASA JPL Ops Lab",
+    mission: "MSL Curiosity (Gale crater)",
+    endpoint: "github.com/googlecreativelab/access-mars",
+    format: "glTF 2.0 + Draco meshes, LOD JPEG tiles",
+    access: "Bundled in public/eva (Apache-2.0)",
+    terms: "Apache-2.0; terrain from NASA/JPL-Caltech imagery",
+    usedFor: ["Surface EVA planning on real terrain", "EVA slope/elevation profiles", "Points of interest"],
+    limitations: ["Four sites around Curiosity's 2012–2016 traverse", "Black-and-white tiles where only Navcam imaged the terrain"],
+    integration: "bundled-asset",
+    docs: "https://github.com/googlecreativelab/access-mars",
+  },
+  {
+    id: "openData",
+    name: "NASA Open Data Portal records (team archive)",
+    provider: "data.nasa.gov",
+    mission: "Viking IRTM · Mars Odyssey MARIE · MRO CRISM · terrain classification",
+    endpoint: "https://data.nasa.gov/",
+    format: "Dataset landing pages (metadata)",
+    access: "Links only",
+    terms: "NASA open data",
+    usedFor: ["Provenance registry from the original project"],
+    limitations: ["The team bundle contains metadata pages, not the instrument archives"],
+    integration: "metadata",
+    docs: "https://data.nasa.gov/",
+  },
+  {
+    id: "roverPhotos",
+    name: "Mars Rover Photos API",
+    provider: "api.nasa.gov",
+    mission: "Curiosity, Opportunity, Spirit",
+    endpoint: "https://api.nasa.gov/mars-photos/…",
+    format: "JSON",
+    access: "Archived",
+    terms: "—",
+    usedFor: [],
+    limitations: ["Archived by api.nasa.gov; the source repository was archived on 2025-10-08 — not integrated"],
+    integration: "not-used",
+    docs: "https://api.nasa.gov/",
+  },
+  {
+    id: "insight",
+    name: "InSight Mars Weather Service API",
+    provider: "api.nasa.gov",
+    mission: "InSight (Elysium Planitia)",
+    endpoint: "https://api.nasa.gov/insight_weather/",
+    format: "JSON (last 7 sols)",
+    access: "Static since the mission ended (Dec 2022)",
+    terms: "NASA open API terms",
+    usedFor: [],
+    limitations: ["No new data — REMS is used instead"],
+    integration: "not-used",
+    docs: "https://api.nasa.gov/",
+  },
+];

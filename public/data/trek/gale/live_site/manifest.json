@@ -1,0 +1,27 @@
+{
+  "siteId": "live_site",
+  "grid": {
+    "x0": -64,
+    "z0": -64,
+    "cell": 1,
+    "nx": 129,
+    "nz": 129
+  },
+  "file": "/data/trek/gale/live_site/elevation.f32",
+  "encoding": "float32-le",
+  "noData": "NaN",
+  "sha256": "0c2375e563044d9bc0548e8fb1d002a30caafecdfd827be1f815544c25dc8109",
+  "source": "NASA/JPL-Caltech MSL Curiosity stereo photogrammetry via Access Mars (live_site)",
+  "license": "Apache-2.0 (Access Mars · Google Creative Lab) / NASA-JPL public domain imagery",
+  "generatedAt": "2026-11-15T00:00:00Z",
+  "meshNodes": "TYPE_TILE",
+  "vertexSpacingM": {
+    "min": 0.004,
+    "median": 0.668,
+    "max": 7.423
+  },
+  "elevationRangeM": [
+    -10.176,
+    12.147
+  ]
+}

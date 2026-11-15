@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { DecisionAnalysis } from "@/core/types";
+import { fallbackNarrative, narrationPrompt, summarizeAnalysis } from "@/services/advisor";
 
 type Mission = {
   site?: string;
@@ -41,10 +43,6 @@ function fallbackAnswer(question: string, mission: Mission) {
 }
 
 async function callGemini(question: string, mission: Mission) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
   const prompt = `You are the Mars Mission Advisor inside the NASA Space Apps 2026 project “Interplanetary Survival Guide: Martian Map”. Give concise, scientifically cautious mission-planning guidance. Treat the supplied simulator numbers as model outputs, not NASA-certified mission requirements. Do not invent NASA measurements. Explain uncertainty and distinguish NASA-sourced context from model assumptions.
 
 Mission JSON:
@@ -53,6 +51,14 @@ ${JSON.stringify(mission, null, 2)}
 User question:
 ${question}`;
 
+  return geminiText(prompt, 500);
+}
+
+/** Server-side Gemini call (the key never reaches the browser). Returns null without a key. */
+async function geminiText(prompt: string, maxOutputTokens: number): Promise<string | null> {
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) return null;
+  const model = process.env["GEMINI_MODEL"] || "gemini-2.5-flash-lite";
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
     {
@@ -60,7 +66,7 @@ ${question}`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.35 },
+        generationConfig: { maxOutputTokens, temperature: 0.3 },
       }),
     },
   );
@@ -87,11 +93,24 @@ export const Route = createFileRoute("/api/mars-advisor")({
         Response.json({
           ok: true,
           service: "mars-advisor",
-          provider: process.env.GEMINI_API_KEY ? "gemini" : "local-fallback",
+          provider: process.env["GEMINI_API_KEY"] ? "gemini" : "local-fallback",
         }),
       POST: async ({ request }) => {
         try {
-          const body = (await request.json()) as { question?: string; mission?: Mission };
+          const body = (await request.json()) as { question?: string; mission?: Mission; mode?: string; analysis?: DecisionAnalysis };
+          if (body.mode === "narrate") {
+            let summary;
+            try {
+              summary = summarizeAnalysis(body.analysis as DecisionAnalysis);
+            } catch (error) {
+              return Response.json({ error: (error as Error).message }, { status: 400 });
+            }
+            const ai = await geminiText(narrationPrompt(summary), 320).catch((error: Error) => {
+              console.error(error);
+              return null;
+            });
+            return Response.json({ answer: ai ?? fallbackNarrative(summary), mode: ai ? "gemini" : "fallback", key: summary.deterministicKey });
+          }
           const question = typeof body.question === "string" ? body.question.trim() : "";
           if (!question) return Response.json({ error: "question is required" }, { status: 400 });
           const mission = body.mission ?? {};

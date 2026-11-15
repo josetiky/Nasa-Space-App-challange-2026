@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROJECT ARES — MARS MISSION ATLAS (3D VR &amp; GIS)</title>
+  <style>
+    :root {
+      --bg: #070606;
+      --panel: #110e0d;
+      --panel2: #191412;
+      --line: rgba(255, 255, 255, 0.1);
+      --bright: #f8f5f0;
+      --fog: #a6988b;
+      --amber: #f59e0b;
+      --cyan: #38bdf8;
+      --mint: #34d399;
+      --rose: #f43f5e;
+      --violet: #a78bfa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 85% 0%, rgba(245,158,11,0.07), transparent 40%), var(--bg);
+      color: var(--bright);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      line-height: 1.42;
+      overflow-x: hidden;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    /* Top Navigation Header */
+    header {
+      position: sticky; top: 0; z-index: 60;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 8px 18px;
+      background: rgba(12, 10, 9, 0.94);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-dot {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: rgba(245, 158, 11, 0.16); border: 1px solid rgba(245, 158, 11, 0.5);
+      display: grid; place-items: center; color: var(--amber); font-weight: 800; font-size: 15px;
+    }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      background: var(--panel2); padding: 3px; border-radius: 10px; border: 1px solid var(--line);
+    }
+    .tab-btn {
+      background: transparent; color: var(--fog); border: none; padding: 6px 12px;
+      border-radius: 7px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: 0.16s;
+    }
+    .tab-btn:hover { color: var(--bright); background: rgba(255,255,255,0.05); }
+    .tab-btn.active { background: var(--amber); color: #190e04; font-weight: 700; }
+
+    /* Compact Non-Intrusive Mission Dock Bar */
+    .mission-dock {
+      background: rgba(17, 14, 13, 0.96);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 18px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .dock-top-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .mission-strip {
+      display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+    .mission-pill {
+      flex: 0 0 auto;
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--panel2); border: 1px solid var(--line); border-radius: 999px;
+      padding: 5px 12px; cursor: pointer; transition: 0.15s; color: var(--bright);
+      font-size: 11.5px; font-weight: 600; white-space: nowrap;
+    }
+    .mission-pill:hover { border-color: rgba(245,158,11,0.5); background: rgba(255,255,255,0.04); }
+    .mission-pill.active {
+      border-color: var(--amber); background: rgba(245,158,11,0.18);
+      box-shadow: 0 0 0 1px rgba(245,158,11,0.55); color: #fff;
+    }
+    .sol-compact-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: var(--panel2); border: 1px solid var(--line); border-radius: 999px;
+      padding: 3px 10px; font-size: 11px;
+    }
+
+    .container { max-width: 1840px; margin: 0 auto; padding: 12px 18px 28px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    }
+    .badge-oficial { background: rgba(52,211,153,0.14); border: 1px solid rgba(52,211,153,0.4); color: var(--mint); }
+    .badge-derivado { background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.4); color: var(--cyan); }
+    .badge-terceros { background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.4); color: var(--amber); }
+
+    /* Immersive 3D VR Workspace Layout */
+    .vr-toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px;
+    }
+    .vr-scene-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .vr-scene-chip {
+      background: var(--panel2); border: 1px solid var(--line); color: var(--fog);
+      padding: 5px 11px; border-radius: 8px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: 0.15s;
+    }
+    .vr-scene-chip:hover { color: var(--bright); border-color: rgba(56,189,248,0.45); }
+    .vr-scene-chip.active {
+      background: rgba(56,189,248,0.16); color: var(--cyan); border-color: var(--cyan); font-weight: 700;
+    }
+    .vr-stage-grid {
+      display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; align-items: start;
+      transition: 0.2s ease;
+    }
+    .vr-stage-grid.theater { grid-template-columns: minmax(0, 1fr); }
+    .vr-stage-grid.theater #vr-side-inspector { display: none; }
+    @media (max-width: 1200px) { .vr-stage-grid { grid-template-columns: 1fr; } }
+
+    .vr-viewport-frame {
+      position: relative; width: 100%; height: calc(100vh - 175px); min-height: 560px;
+      border-radius: 14px; overflow: hidden; border: 1px solid rgba(245, 158, 11, 0.32);
+      background: #000; box-shadow: 0 18px 42px rgba(0,0,0,0.65);
+    }
+    .scene-iframe { width: 100%; height: 100%; border: none; display: block; background: #000; }
+
+    /* Global Map Grid */
+    .main-grid { display: grid; grid-template-columns: 270px minmax(0, 1fr) 360px; gap: 14px; }
+    @media (max-width: 1280px) { .main-grid { grid-template-columns: 1fr; } }
+    .map-box {
+      position: relative; height: 520px; border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--line); background: #050404;
+    }
+    canvas#mars-map-canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+    .metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+    @media (max-width: 768px) { .metrics-row { grid-template-columns: repeat(2, 1fr); } }
+    .metric-box { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 9px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 6px 11px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      border: 1px solid var(--line); background: var(--panel2); color: var(--bright); cursor: pointer; text-decoration: none;
+    }
+    .btn:hover { border-color: var(--amber); }
+    .btn-primary { background: var(--amber); color: #1a0f06; border-color: var(--amber); font-weight: 700; }
+    .btn-cyan { background: rgba(56,189,248,0.14); color: var(--cyan); border-color: rgba(56,189,248,0.45); }
+    .layer-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 6px 8px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line);
+      font-size: 11.5px; margin-bottom: 5px; cursor: pointer;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--fog); }
+    .chip {
+      display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px;
+      border: 1px solid var(--line); background: var(--panel); color: var(--fog); cursor: pointer; margin: 1px;
+    }
+    .chip.active { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.15); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-dot">♂</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong style="font-size:14px;letter-spacing:0.04em;">PROJECT ARES — MARS MISSION ATLAS</strong>
+          <span class="badge badge-oficial mono">11 MISIONES 3D · IAU MARS 2000</span>
+        </div>
+        <p class="mono" style="font-size:9.5px;color:var(--fog);">
+          Motor WebGL 3D Access Mars (NASA JPL OnSight) + Cartografía MOLA / HiRISE / CRISM
+        </p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" onclick="switchMode('immersive')" id="tab-immersive">1. Simulador 3D VR (11 Misiones)</button>
+      <button class="tab-btn" onclick="switchMode('global')" id="tab-global">2. Mapa Global 2D</button>
+      <button class="tab-btn" onclick="switchMode('discoveries')" id="tab-discoveries">3. Descubrimientos</button>
+      <button class="tab-btn" onclick="switchMode('terrain')" id="tab-terrain">4. Terrain Intelligence</button>
+      <button class="tab-btn" onclick="switchMode('compare')" id="tab-compare">5. Tabla Comparativa</button>
+    </div>
+
+    <div class="mono" style="font-size:10.5px;color:var(--fog);" id="mars-clock">MSD · MTC</div>
+  </header>
+
+  <!-- Barra Superior Compacta de 11 Misiones (Fuera del Simulador VR para no obstruir el lienzo 3D) -->
+  <div class="mission-dock">
+    <div class="dock-top-row">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span class="mono" style="font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--amber);font-weight:700;">Misiones (11):</span>
+        <button class="chip active" onclick="filterCategory('all')" id="cat-all">Todas</button>
+        <button class="chip" onclick="filterCategory('rover')" id="cat-rover">Rovers (6)</button>
+        <button class="chip" onclick="filterCategory('aerial')" id="cat-aerial">Aérea (1)</button>
+        <button class="chip" onclick="filterCategory('lander')" id="cat-lander">Landers (4)</button>
+      </div>
+
+      <!-- Control compacto de Sol en una sola línea -->
+      <div class="sol-compact-bar">
+        <span class="mono" style="font-size:10px;color:var(--cyan);font-weight:700;" id="timeline-title">PERSEVERANCE</span>
+        <button class="chip" onclick="togglePlayTimeline()" id="btn-play-sol" style="color:var(--cyan);border-color:rgba(56,189,248,0.4);">▶ Sol</button>
+        <input type="range" id="sol-slider" min="1" max="2022" value="2022" style="width:110px;accent-color:var(--amber);cursor:pointer;" oninput="onSolInput(this.value)" />
+        <span class="mono" style="font-size:10px;font-weight:700;color:var(--bright);" id="sol-counter">Sol 2022</span>
+        <span class="mono" style="font-size:9.5px;color:var(--fog);display:none;" id="sol-max-label"></span>
+        <span style="font-size:10px;color:var(--fog);" id="timeline-subtitle"></span>
+      </div>
+    </div>
+
+    <div class="mission-strip" id="mission-strip"></div>
+    <div id="waypoint-chips" style="display:none;"></div>
+  </div>
+
+  <div class="container">
+    <!-- SECCIÓN 1: SIMULADOR 3D VR (ACCESS MARS PARA LAS 11 MISIONES — VISTA LIMPIA SIN INTERFERENCIA) -->
+    <div id="view-immersive" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="vr-toolbar">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="badge badge-oficial mono" id="rec-type-badge">MODO 3D VR</span>
+          <strong style="font-size:14px;" id="immersive-mission-heading">Motor de Exploración 3D — Access Mars</strong>
+          <div class="vr-scene-tabs" id="access-mars-scene-buttons"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <button class="btn" onclick="triggerOpportunityStormLandmark()" style="border-color:#ef4444;color:#fca5a5;background:rgba(239,68,68,0.16);" title="Ir al Landmark 3D de Opportunity atrapado en la Tormenta de Polvo de 2018 (Sol 5111)">🌪️ Landmark Opportunity: Tormenta 2018</button>
+          <button class="btn" onclick="toggleTheaterMode()" id="btn-theater-toggle" title="Ocultar/Mostrar panel lateral para ampliar el simulador VR">⇄ Modo Teatro 3D</button>
+          <a id="download-glb-model" href="/models/missions_3d/perseverance_jezero.glb" download class="btn btn-cyan">Malla .glb ⬇</a>
+          <a id="open-full-access-mars" href="/access-mars-engine/index.html?site=perseverance_jezero&mission=perseverance&modeType=360&hasSeenOrientation=true" target="_blank" class="btn btn-primary">Pantalla Completa VR ↗</a>
+        </div>
+      </div>
+
+      <p style="font-size:11.5px;color:var(--fog);display:none;" id="rec-type-desc"></p>
+
+      <div class="vr-stage-grid" id="vr-stage-grid">
+        <div class="vr-viewport-frame">
+          <iframe id="access-mars-iframe" class="scene-iframe" src="/access-mars-engine/index.html?site=perseverance_jezero&mission=perseverance&modeType=360&hasSeenOrientation=true" title="Access Mars 3D Multi-Mission Surface Explorer"></iframe>
+        </div>
+
+        <aside id="vr-side-inspector" style="display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 175px);overflow-y:auto;">
+          <section class="card" id="access-mars-poi-panel"></section>
+          <section class="card" id="curiosity-rover-inspector"></section>
+        </aside>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: GLOBAL MARS EXPLORER -->
+    <div id="view-global" class="main-grid" style="display:none;">
+      <aside class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--amber);">Terrain Intelligence</p>
+          <h2 style="font-size:15px;margin-top:2px;">Capas Geoespaciales</h2>
+        </div>
+
+        <div>
+          <p class="mono" style="font-size:10px;color:var(--fog);margin-bottom:6px;">MAPA BASE PLANETARIO</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="btn active" id="base-mola" onclick="setBasemapStyle('mola')">MOLA Hipsométrico</button>
+            <button class="btn" id="base-thermal" onclick="setBasemapStyle('thermal')">THEMIS Térmico</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="mono" style="font-size:10px;color:var(--fog);margin-bottom:6px;">CAPAS ACTIVABLES</p>
+          <div id="layers-list"></div>
+        </div>
+
+        <div style="border-top:1px solid var(--line);padding-top:10px;">
+          <p class="mono" style="font-size:10px;color:var(--fog);margin-bottom:6px;">FORMACIONES MARCIANAS</p>
+          <div id="features-list" style="max-height:220px;overflow-y:auto;"></div>
+        </div>
+      </aside>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="map-box">
+          <canvas id="mars-map-canvas" width="1200" height="600"></canvas>
+          <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.78);border:1px solid rgba(255,255,255,0.15);padding:6px 10px;border-radius:8px;pointer-events:none;font-size:11px;" class="mono" id="map-hud"></div>
+          <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.78);border:1px solid rgba(255,255,255,0.15);padding:5px 10px;border-radius:8px;font-size:10px;color:var(--fog);pointer-events:none;" class="mono" id="map-cursor-coords">
+            Haz clic sobre cualquier misión en el mapa para inspeccionar su sitio
+          </div>
+        </div>
+
+        <section class="card">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
+            <div>
+              <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--amber);">Análisis Geoespacial del Recorrido</p>
+              <h3 style="font-size:14px;" id="profile-title">Perfil Topográfico</h3>
+            </div>
+            <span class="badge badge-oficial mono" id="profile-badge">OFICIAL · MOLA / MMGIS</span>
+          </div>
+
+          <div class="metrics-row" id="sol-metrics-row"></div>
+
+          <div style="margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;">
+            <svg id="elevation-svg" viewBox="0 0 800 140" style="width:100%;height:125px;display:block;"></svg>
+          </div>
+        </section>
+      </div>
+
+      <aside style="display:flex;flex-direction:column;gap:12px;">
+        <section class="card" id="mission-dossier"></section>
+        <section class="card" id="active-discovery-card"></section>
+      </aside>
+    </div>
+
+    <!-- SECCIÓN 3: SCIENTIFIC DISCOVERIES -->
+    <div id="view-discoveries" style="display:none;flex-direction:column;gap:14px;">
+      <section class="card">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
+          <div>
+            <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--amber);">Catálogo Georreferenciado</p>
+            <h2 style="font-size:18px;">Descubrimientos Científicos, Muestras y Perforaciones</h2>
+          </div>
+          <div id="discovery-filters"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;margin-top:12px;" id="discoveries-grid"></div>
+      </section>
+    </div>
+
+    <!-- SECCIÓN 4: TERRAIN INTELLIGENCE -->
+    <div id="view-terrain" style="display:none;flex-direction:column;gap:14px;">
+      <section class="card">
+        <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--amber);">Fuentes Orbitales y Cartográficas</p>
+        <h2 style="font-size:18px;margin-top:2px;">Matriz de Terrain Intelligence (MOLA, HiRISE, CTX, THEMIS, CRISM, HRSC, USGS)</h2>
+        <div style="overflow-x:auto;margin-top:10px;">
+          <table id="terrain-sources-table"></table>
+        </div>
+      </section>
+
+      <section class="card">
+        <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--cyan);">TIPO D · Ortoimágenes Regionales y Sitios de Misión</p>
+        <h3 style="font-size:16px;margin-top:2px;">Biblioteca Cartográfica Regional de Marte</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:10px;" id="regional-maps-grid"></div>
+      </section>
+    </div>
+
+    <!-- SECCIÓN 5: COMPARADOR DE LAS 11 MISIONES -->
+    <div id="view-compare" style="display:none;flex-direction:column;gap:14px;">
+      <section class="card">
+        <p class="mono" style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--amber);">Comparación Multidisciplinaria</p>
+        <h2 style="font-size:18px;margin-top:2px;">Tabla Maestra de las 11 Misiones Marcianas (1976 – 2026)</h2>
+        <div style="overflow-x:auto;margin-top:10px;">
+          <table id="compare-missions-table"></table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/mars-mission-atlas.js"></script>
+  <script>
+    const D = window.MARS_ATLAS_DATA;
+    let state = {
+      mode: "immersive",
+      theater: false,
+      category: "all",
+      missionId: "perseverance",
+      sol: 2022,
+      playing: false,
+      timer: null,
+      basemap: "mola",
+      sceneId: "perseverance_jezero",
+      selectedPoiId: "pj1",
+      selectedRoverId: "rover1",
+      selectedDiscovery: null,
+      discoveryKind: "all",
+      layers: {
+        missions: true,
+        traverses: true,
+        discoveries: true,
+        craters: true,
+        mountains: true,
+        valleys: true,
+        dunes: true,
+        polar: true,
+      },
+    };
+
+    function getMission() {
+      return D.MISSIONS.find((m) => m.id === state.missionId) || D.MISSIONS[0];
+    }
+
+    function triggerOpportunityStormLandmark() {
+      state.missionId = "opportunity";
+      state.sceneId = "opportunity_endeavour";
+      state.sol = 5111;
+      state.selectedPoiId = "opn3";
+      updateAll();
+      setTimeout(() => {
+        const ifr = document.getElementById("access-mars-iframe");
+        if (ifr && ifr.contentWindow) {
+          ifr.contentWindow.postMessage({ type: "TOGGLE_OPP_STORM_2018", forceState: true }, "*");
+        }
+      }, 2200);
+    }
+
+    function toggleTheaterMode() {
+      state.theater = !state.theater;
+      const grid = document.getElementById("vr-stage-grid");
+      const btn = document.getElementById("btn-theater-toggle");
+      grid.classList.toggle("theater", state.theater);
+      btn.textContent = state.theater ? "⇄ Mostrar Panel Lateral" : "⇄ Modo Teatro 3D";
+    }
+
+    function computeMetrics(mission, targetSol) {
+      if (!mission.hasMobileTraverse || !mission.waypoints.length) {
+        return {
+          sol: Math.min(targetSol, mission.maxSol),
+          lat: mission.lat,
+          lon: mission.lon,
+          lon360: mission.lon360,
+          elevM: mission.elevationM,
+          km: 0,
+          gainM: 0,
+          lossM: 0,
+          netM: 0,
+          maxSlope: 0,
+          reached: [],
+          activeWp: null,
+          discoveries: mission.discoveries.filter((d) => d.sol <= targetSol),
+        };
+      }
+      const sol = Math.max(1, Math.min(targetSol, mission.maxSol));
+      const reached = mission.waypoints.filter((w) => w.sol <= sol);
+      const activeWp = reached[reached.length - 1] || mission.waypoints[0];
+      const nextWp = mission.waypoints.find((w) => w.sol > sol);
+
+      let lat = activeWp.lat, lon = activeWp.lon, elevM = activeWp.elevM, km = activeWp.km;
+      if (nextWp && nextWp.sol > activeWp.sol) {
+        const t = (sol - activeWp.sol) / (nextWp.sol - activeWp.sol);
+        lat = activeWp.lat + (nextWp.lat - activeWp.lat) * t;
+        lon = activeWp.lon + (nextWp.lon - activeWp.lon) * t;
+        elevM = activeWp.elevM + (nextWp.elevM - activeWp.elevM) * t;
+        km = activeWp.km + (nextWp.km - activeWp.km) * t;
+      }
+
+      let gainM = 0, lossM = 0, maxSlope = 0;
+      for (let i = 1; i < mission.waypoints.length; i++) {
+        const w = mission.waypoints[i], prev = mission.waypoints[i - 1];
+        if (w.sol <= sol) {
+          const dz = w.elevM - prev.elevM;
+          const dx = Math.max(1, (w.km - prev.km) * 1000);
+          const slope = (Math.atan2(Math.abs(dz), dx) * 180) / Math.PI;
+          if (dz > 0) gainM += dz; else lossM += Math.abs(dz);
+          if (slope > maxSlope) maxSlope = slope;
+        }
+      }
+
+      return {
+        sol,
+        lat,
+        lon,
+        lon360: ((lon % 360) + 360) % 360,
+        elevM: Math.round(elevM),
+        km: Number(km.toFixed(2)),
+        gainM: Math.round(gainM),
+        lossM: Math.round(lossM),
+        netM: Math.round(elevM - mission.waypoints[0].elevM),
+        maxSlope: Number(maxSlope.toFixed(1)),
+        reached: reached.length ? reached : [mission.waypoints[0]],
+        activeWp,
+        discoveries: mission.discoveries.filter((d) => d.sol <= sol),
+      };
+    }
+
+    function switchMode(m) {
+      state.mode = m;
+      ["global", "immersive", "discoveries", "terrain", "compare"].forEach((id) => {
+        document.getElementById("view-" + id).style.display = id === m ? (id === "global" ? "grid" : "flex") : "none";
+        document.getElementById("tab-" + id).classList.toggle("active", id === m);
+      });
+      if (m === "global") drawMarsMap();
+      if (m === "immersive") renderImmersive();
+      if (m === "discoveries") renderDiscoveriesPage();
+      if (m === "terrain") renderTerrainPage();
+      if (m === "compare") renderComparePage();
+    }
+
+    function filterCategory(cat) {
+      state.category = cat;
+      ["all", "rover", "aerial", "lander"].forEach((c) => {
+        document.getElementById("cat-" + c).classList.toggle("active", c === cat);
+      });
+      renderMissionStrip();
+    }
+
+    function selectMission(id) {
+      state.missionId = id;
+      const m = getMission();
+      state.sol = m.maxSol;
+      state.selectedDiscovery = m.discoveries[0] || null;
+      if (m.defaultSceneId) {
+        state.sceneId = m.defaultSceneId;
+        const sc = D.ACCESS_MARS_SCENES.find((s) => s.id === state.sceneId);
+        if (sc && sc.pois.length) state.selectedPoiId = sc.pois[0].id;
+      }
+      if (state.playing) togglePlayTimeline();
+      updateAll();
+    }
+
+    function onSolInput(val) {
+      state.sol = Number(val);
+      const m = getMission();
+      const metrics = computeMetrics(m, state.sol);
+      if (metrics.activeWp && metrics.activeWp.sceneId && state.sceneId !== metrics.activeWp.sceneId) {
+        state.sceneId = metrics.activeWp.sceneId;
+        const sc = D.ACCESS_MARS_SCENES.find((s) => s.id === state.sceneId);
+        if (sc && sc.pois.length) state.selectedPoiId = sc.pois[0].id;
+      }
+      updateAll();
+    }
+
+    function togglePlayTimeline() {
+      const m = getMission();
+      state.playing = !state.playing;
+      document.getElementById("btn-play-sol").textContent = state.playing ? "⏸" : "▶ Sol";
+      if (state.playing) {
+        if (state.sol >= m.maxSol) state.sol = 1;
+        const step = Math.max(1, Math.ceil(m.maxSol / 100));
+        state.timer = setInterval(() => {
+          state.sol = Math.min(m.maxSol, state.sol + step);
+          updateAll();
+          if (state.sol >= m.maxSol) togglePlayTimeline();
+        }, 160);
+      } else if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+    }
+
+    function jumpToImmersive(sceneId) {
+      const m = getMission();
+      if (sceneId) {
+        state.sceneId = sceneId;
+      } else if (computeMetrics(m, state.sol).activeWp?.sceneId) {
+        state.sceneId = computeMetrics(m, state.sol).activeWp.sceneId;
+      } else if (m.defaultSceneId) {
+        state.sceneId = m.defaultSceneId;
+      }
+      const sc = D.ACCESS_MARS_SCENES.find((s) => s.id === state.sceneId);
+      if (sc && sc.pois.length) state.selectedPoiId = sc.pois[0].id;
+      switchMode("immersive");
+    }
+
+    function setBasemapStyle(style) {
+      state.basemap = style;
+      document.getElementById("base-mola").classList.toggle("active", style === "mola");
+      document.getElementById("base-thermal").classList.toggle("active", style === "thermal");
+      drawMarsMap();
+    }
+
+    function renderMissionStrip() {
+      const strip = document.getElementById("mission-strip");
+      const list = state.category === "all" ? D.MISSIONS : D.MISSIONS.filter((m) => m.category === state.category);
+      strip.innerHTML = list.map((m) => `
+        <button class="mission-pill ${m.id === state.missionId ? "active" : ""}" onclick="selectMission('${m.id}')" title="${m.name} — ${m.region}">
+          <span style="width:8px;height:8px;border-radius:50%;background:${m.color};display:inline-block;"></span>
+          <span>${m.name.split(" (")[0]}</span>
+          <span class="mono" style="font-size:9.5px;color:${m.id === state.missionId ? 'var(--amber)' : 'var(--fog)'};">
+            ${m.totalKm !== null ? m.totalKm + " km" : "Fijo"}
+          </span>
+        </button>
+      `).join("");
+    }
+
+    function renderLayersList() {
+      const entries = [
+        ["missions", "11 Sitios de Aterrizaje", "OFICIAL", "#ffffff"],
+        ["traverses", "Trayectorias Reales por Sol", "OFICIAL", "#38bdf8"],
+        ["discoveries", "Descubrimientos & Muestras", "OFICIAL", "#fbbf24"],
+        ["craters", "Cráteres y Cuencas", "OFICIAL", "#f59e0b"],
+        ["mountains", "Volcanes (Tharsis / Elysium)", "OFICIAL", "#ef4444"],
+        ["valleys", "Valles y Canales Fluviales", "OFICIAL", "#22d3ee"],
+        ["dunes", "Campos de Dunas Eólicas", "OBSERVADO", "#eab308"],
+        ["polar", "Casquetes Polares (NPLD)", "OFICIAL", "#93c5fd"],
+      ];
+      document.getElementById("layers-list").innerHTML = entries.map(([key, label, tag, color]) => `
+        <label class="layer-item">
+          <span style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" ${state.layers[key] ? "checked" : ""} onchange="state.layers['${key}']=this.checked;drawMarsMap();" style="accent-color:var(--amber);" />
+            <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;"></span>
+            <span>${label}</span>
+          </span>
+          <span class="mono" style="font-size:8.5px;color:var(--fog);">${tag}</span>
+        </label>
+      `).join("");
+
+      document.getElementById("features-list").innerHTML = D.PLANETARY_FEATURES.map((f) => `
+        <div class="layer-item" onclick="inspectFeature('${f.id}')">
+          <span><strong>${f.name}</strong> <span style="color:var(--fog);font-size:10px;">(${f.kind})</span></span>
+          <span class="mono" style="font-size:9.5px;color:var(--cyan);">${f.elevM} m</span>
+        </div>
+      `).join("");
+    }
+
+    function inspectFeature(fId) {
+      const f = D.PLANETARY_FEATURES.find((x) => x.id === fId);
+      if (!f) return;
+      document.getElementById("active-discovery-card").innerHTML = `
+        <span class="badge badge-oficial mono">FORMACIÓN PLANETARIA · ${f.kind.toUpperCase()}</span>
+        <h3 style="font-size:15px;margin-top:6px;">${f.name}</h3>
+        <p class="mono" style="font-size:10.5px;color:var(--cyan);margin-top:2px;">
+          ${Math.abs(f.lat).toFixed(2)}°${f.lat >= 0 ? 'N' : 'S'}, ${f.lon360.toFixed(2)}°E · Cota MOLA: ${f.elevM} m
+        </p>
+        <img src="${f.img}" alt="${f.name}" style="width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--line);" />
+        <p style="font-size:11.5px;color:var(--fog);margin-top:8px;"><strong style="color:var(--bright);">Unidad:</strong> ${f.unit}</p>
+        <p style="font-size:11.5px;color:var(--fog);margin-top:4px;"><strong style="color:var(--bright);">Mineralogía:</strong> ${f.mineral}</p>
+        <a href="${f.url}" target="_blank" class="btn" style="margin-top:10px;width:100%;">Consultar Fuente USGS / PDS ↗</a>
+      `;
+    }
+
+    function drawMarsMap() {
+      const canvas = document.getElementById("mars-map-canvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      const m = getMission();
+      const metrics = computeMetrics(m, state.sol);
+
+      const project = (lat, lon) => ({
+        x: ((lon + 180) / 360) * W,
+        y: ((90 - lat) / 180) * H,
+      });
+
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      if (state.basemap === "mola") {
+        grad.addColorStop(0.0, "#192841");
+        grad.addColorStop(0.32, "#2c3e55");
+        grad.addColorStop(0.5, "#6b3e26");
+        grad.addColorStop(0.75, "#9c4f2d");
+        grad.addColorStop(1.0, "#3b2318");
+      } else {
+        grad.addColorStop(0.0, "#120924");
+        grad.addColorStop(0.5, "#591c3b");
+        grad.addColorStop(1.0, "#1f0d1d");
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      const basins = [
+        { lat: -42.4, lon: 70.5, r: 95, color: "rgba(25, 85, 160, 0.38)" },
+        { lat: 45.0, lon: 110.0, r: 140, color: "rgba(30, 95, 150, 0.28)" },
+        { lat: 25.0, lon: -40.0, r: 110, color: "rgba(35, 100, 145, 0.25)" },
+        { lat: 10.0, lon: -115.0, r: 130, color: "rgba(235, 110, 55, 0.28)" },
+      ];
+      basins.forEach((b) => {
+        const p = project(b.lat, b.lon);
+        const g = ctx.createRadialGradient(p.x, p.y, 5, p.x, p.y, b.r);
+        g.addColorStop(0, b.color);
+        g.addColorStop(1, "transparent");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      for (let lon = -180; lon <= 180; lon += 30) {
+        const { x } = project(0, lon);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        const lon360 = ((lon % 360) + 360) % 360;
+        ctx.fillText(lon360 + "°E", x + 4, H - 8);
+      }
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const { y } = project(lat, 0);
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        ctx.fillText((lat >= 0 ? lat + "°N" : Math.abs(lat) + "°S"), 6, y - 4);
+      }
+
+      D.PLANETARY_FEATURES.forEach((f) => {
+        const show =
+          (f.kind === "crater" && state.layers.craters) ||
+          (f.kind === "mountain" && state.layers.mountains) ||
+          (f.kind === "valley" && state.layers.valleys) ||
+          (f.kind === "dune" && state.layers.dunes) ||
+          (f.kind === "polar" && state.layers.polar);
+        if (!show) return;
+        const p = project(f.lat, f.lon);
+        ctx.strokeStyle = f.kind === "mountain" ? "#ef4444" : f.kind === "valley" ? "#22d3ee" : "#f59e0b";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.font = "10px sans-serif";
+        ctx.fillText(f.name, p.x + 12, p.y + 3);
+      });
+
+      if (state.layers.missions) {
+        D.MISSIONS.forEach((mis) => {
+          const p = project(mis.lat, mis.lon);
+          const isSel = mis.id === m.id;
+          if (isSel) {
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.fillStyle = mis.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, isSel ? 7 : 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#000";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = isSel ? "#fbbf24" : "#f7f3ee";
+          ctx.font = isSel ? "bold 12px sans-serif" : "11px sans-serif";
+          ctx.fillText(mis.name, p.x + 10, p.y - 6);
+        });
+      }
+
+      const boxW = 330, boxH = 210, boxX = 14, boxY = H - boxH - 14;
+      ctx.fillStyle = "rgba(10, 8, 7, 0.9)";
+      ctx.strokeStyle = m.color;
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+      ctx.fillStyle = "#f7f3ee";
+      ctx.font = "bold 11px ui-monospace, monospace";
+      ctx.fillText(
+        m.hasMobileTraverse
+          ? `ZOOM TRAYECTORIA REAL: ${m.name.toUpperCase()} (Sol ${metrics.sol})`
+          : `ESTACIÓN FIJA DE SUPERFICIE: ${m.name.toUpperCase()}`,
+        boxX + 10,
+        boxY + 18
+      );
+
+      if (m.hasMobileTraverse && m.waypoints.length > 1) {
+        const lats = m.waypoints.map((w) => w.lat);
+        const lons = m.waypoints.map((w) => w.lon);
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+        const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+        const dLat = Math.max(0.0002, maxLat - minLat);
+        const dLon = Math.max(0.0002, maxLon - minLon);
+
+        const toBox = (lat, lon) => ({
+          x: boxX + 24 + ((lon - minLon) / dLon) * (boxW - 48),
+          y: boxY + boxH - 24 - ((lat - minLat) / dLat) * (boxH - 56),
+        });
+
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        m.waypoints.forEach((w, idx) => {
+          const pt = toBox(w.lat, w.lon);
+          if (idx === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = m.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        metrics.reached.forEach((w, idx) => {
+          const pt = toBox(w.lat, w.lon);
+          if (idx === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+        });
+        const currPt = toBox(metrics.lat, metrics.lon);
+        ctx.lineTo(currPt.x, currPt.y);
+        ctx.stroke();
+
+        m.waypoints.forEach((w) => {
+          const pt = toBox(w.lat, w.lon);
+          ctx.fillStyle = w.sol <= metrics.sol ? m.color : "rgba(255,255,255,0.3)";
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.arc(currPt.x, currPt.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "10px ui-monospace, monospace";
+        ctx.fillText(`Sol ${metrics.sol} (${metrics.km} km)`, Math.min(boxX + boxW - 115, currPt.x + 8), currPt.y - 6);
+      } else {
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.font = "11px sans-serif";
+        ctx.fillText(`Lander estático en ${m.site}`, boxX + 14, boxY + 55);
+        ctx.fillText(`Coordenadas: ${Math.abs(m.lat).toFixed(4)}°${m.lat >= 0 ? 'N' : 'S'}, ${m.lon360.toFixed(4)}°E`, boxX + 14, boxY + 78);
+        ctx.fillText(`Cota MOLA: ${m.elevationM} m · Operación: ${m.maxSol} soles`, boxX + 14, boxY + 101);
+        ctx.fillStyle = "#34d399";
+        ctx.fillText("✓ Sin trayectorias móviles fabricadas (Rigor Científico)", boxX + 14, boxY + 130);
+      }
+    }
+
+    function renderElevationProfile(m, metrics) {
+      const svg = document.getElementById("elevation-svg");
+      document.getElementById("profile-title").textContent = m.hasMobileTraverse
+        ? `Perfil Topográfico de ${m.name} (Sol 1 → Sol ${metrics.sol})`
+        : `${m.name} — Estación Fija en ${m.site} (Cota constante ${m.elevationM} m MOLA)`;
+
+      document.getElementById("sol-metrics-row").innerHTML = `
+        <div class="metric-box">
+          <div class="mono" style="font-size:9px;color:var(--fog);">DISTANCIA AL SOL ${metrics.sol}</div>
+          <div style="font-size:15px;font-weight:700;margin-top:2px;">${m.hasMobileTraverse ? metrics.km + " km" : "0 km (Fijo)"}</div>
+        </div>
+        <div class="metric-box">
+          <div class="mono" style="font-size:9px;color:var(--fog);">COTA ACTUAL (MOLA)</div>
+          <div style="font-size:15px;font-weight:700;color:var(--cyan);margin-top:2px;">${metrics.elevM} m</div>
+        </div>
+        <div class="metric-box">
+          <div class="mono" style="font-size:9px;color:var(--fog);">DESNIVEL ACUMULADO</div>
+          <div style="font-size:15px;font-weight:700;color:var(--mint);margin-top:2px;">+${metrics.gainM}m / -${metrics.lossM}m</div>
+        </div>
+        <div class="metric-box">
+          <div class="mono" style="font-size:9px;color:var(--fog);">PENDIENTE MÁXIMA</div>
+          <div style="font-size:15px;font-weight:700;color:var(--amber);margin-top:2px;">${metrics.maxSlope}°</div>
+        </div>
+        <div class="metric-box">
+          <div class="mono" style="font-size:9px;color:var(--fog);">HALLAZGOS AL SOL ${metrics.sol}</div>
+          <div style="font-size:15px;font-weight:700;margin-top:2px;">${metrics.discoveries.length} / ${m.discoveries.length}</div>
+        </div>
+      `;
+
+      if (!m.hasMobileTraverse || m.waypoints.length < 2) {
+        svg.innerHTML = `<text x="20" y="75" fill="#a8998c" font-size="13" font-family="monospace">Misión de superficie fija en ${m.site} (${m.elevationM} m MOLA). No existen recorridos móviles para graficar.</text>`;
+        return;
+      }
+
+      const wps = m.waypoints;
+      const maxKm = Math.max(0.01, wps[wps.length - 1].km);
+      const elevs = wps.map((w) => w.elevM);
+      const minE = Math.min(...elevs), maxE = Math.max(...elevs);
+      const dE = Math.max(1, maxE - minE);
+
+      const toXY = (km, e) => ({
+        x: 55 + (km / maxKm) * 720,
+        y: 115 - ((e - minE) / dE) * 90,
+      });
+
+      const pts = wps.map((w) => toXY(w.km, w.elevM));
+      const polyPoints = pts.map((p) => `${p.x},${p.y}`).join(" ");
+      const areaPoints = `55,120 ${polyPoints} ${pts[pts.length - 1].x},120`;
+      const curX = 55 + (metrics.km / maxKm) * 720;
+
+      svg.innerHTML = `
+        <line x1="55" y1="25" x2="775" y2="25" stroke="#2d231e" stroke-dasharray="3 3" />
+        <line x1="55" y1="115" x2="775" y2="115" stroke="#2d231e" />
+        <text x="6" y="30" fill="#a8998c" font-size="10" font-family="monospace">${maxE}m</text>
+        <text x="6" y="118" fill="#a8998c" font-size="10" font-family="monospace">${minE}m</text>
+        <polygon points="${areaPoints}" fill="${m.color}" fill-opacity="0.2" />
+        <polyline points="${polyPoints}" fill="none" stroke="${m.color}" stroke-width="2.5" />
+        <line x1="${curX}" y1="15" x2="${curX}" y2="120" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 3" />
+        <text x="${Math.min(680, curX + 6)}" y="22" fill="#fbbf24" font-size="10" font-family="monospace">Sol ${metrics.sol} (${metrics.km} km)</text>
+      `;
+    }
+
+    function renderMissionDossier(m, metrics) {
+      const missionScenes = D.ACCESS_MARS_SCENES.filter((s) => s.missionId === m.id);
+      const accessMarsBtns = `
+        <div style="margin-top:10px;padding:10px;border-radius:10px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.35);">
+          <div class="mono" style="font-size:9.5px;color:var(--mint);font-weight:700;">★ ESCENAS 3D DE SUPERFICIE DISPONIBLES (${missionScenes.length}):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+            ${missionScenes.map((s) => `<button class="chip active" onclick="jumpToImmersive('${s.id}')">${s.name}</button>`).join("")}
+          </div>
+        </div>
+      `;
+
+      document.getElementById("mission-dossier").innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div>
+            <p class="mono" style="font-size:10px;color:var(--amber);">${m.agency} · ${m.category.toUpperCase()}</p>
+            <h2 style="font-size:17px;">${m.name}</h2>
+          </div>
+          <span class="badge badge-${m.validation.toLowerCase()} mono">${m.validation}</span>
+        </div>
+        <img src="${m.image}" alt="${m.name}" style="width:100%;height:125px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--line);" />
+        <p style="font-size:11.5px;color:var(--fog);margin-top:8px;">${m.objectives}</p>
+        <div class="mono" style="font-size:10px;margin-top:8px;padding:8px;background:var(--panel2);border-radius:8px;border:1px solid var(--line);">
+          <div><strong>Sitio:</strong> ${m.site} (${m.region})</div>
+          <div><strong>Coordenadas IAU:</strong> ${Math.abs(m.lat).toFixed(4)}°${m.lat >= 0 ? 'N' : 'S'}, ${m.lon360.toFixed(4)}°E (${m.elevationM} m MOLA)</div>
+          <div><strong>Lanzamiento / Aterrizaje:</strong> ${m.launch} → ${m.landing}</div>
+        </div>
+        ${accessMarsBtns}
+        <div style="margin-top:10px;">
+          <p class="mono" style="font-size:9.5px;color:var(--fog);">INSTRUMENTOS CIENTÍFICOS (${m.instruments.length})</p>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+            ${m.instruments.map((i) => `<span class="chip">${i}</span>`).join("")}
+          </div>
+        </div>
+      `;
+
+      const disc = state.selectedDiscovery || metrics.discoveries[0] || m.discoveries[0];
+      if (disc) {
+        document.getElementById("active-discovery-card").innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="badge badge-oficial mono">SOL ${disc.sol}</span>
+            <span class="mono" style="font-size:10px;color:var(--cyan);">${disc.inst}</span>
+          </div>
+          <h3 style="font-size:14px;margin-top:6px;">🔬 ${disc.title}</h3>
+          <p style="font-size:11.5px;color:var(--fog);margin-top:5px;">${disc.desc}</p>
+          <a href="${disc.url}" target="_blank" class="btn" style="margin-top:8px;width:100%;">Archivo Primario PDS / NASA ↗</a>
+        `;
+      }
+    }
+
+    function renderImmersive() {
+      const m = getMission();
+      const missionScenes = D.ACCESS_MARS_SCENES.filter((s) => s.missionId === m.id);
+      let scene = D.ACCESS_MARS_SCENES.find((s) => s.id === state.sceneId);
+      if (!scene || scene.missionId !== m.id) {
+        scene = missionScenes[0] || D.ACCESS_MARS_SCENES[0];
+        state.sceneId = scene.id;
+      }
+
+      const recInfo = D.RECONSTRUCTION_TYPES[scene.recType] || D.RECONSTRUCTION_TYPES.TYPE_B_DEM;
+      document.getElementById("rec-type-badge").textContent = scene.recType === "TYPE_A_PHOTOGRAMMETRY" ? "TIPO A · FOTOGRAMETRÍA 3D" : "TIPO B · SUPERFICIE 3D";
+      document.getElementById("immersive-mission-heading").textContent = `${m.name}`;
+      document.getElementById("rec-type-desc").textContent = `${scene.summary} (${recInfo.desc})`;
+
+      const targetSrc = `/access-mars-engine/index.html?site=${scene.id}&mission=${m.id}&modeType=360&hasSeenOrientation=true`;
+      document.getElementById("open-full-access-mars").href = targetSrc;
+      const dlBtn = document.getElementById("download-glb-model");
+      if (dlBtn && scene.glbModel) dlBtn.href = scene.glbModel;
+
+      const iframe = document.getElementById("access-mars-iframe");
+      if (!iframe.src.endsWith(targetSrc)) iframe.src = targetSrc;
+
+      // Render ONLY the active mission's 3D scenes in the compact toolbar so it never clutters the screen!
+      document.getElementById("access-mars-scene-buttons").innerHTML = missionScenes.map((s) => `
+        <button class="vr-scene-chip ${s.id === scene.id ? 'active' : ''}" onclick="state.sceneId='${s.id}';state.selectedPoiId='${s.pois[0].id}';renderImmersive();">
+          📍 ${s.name.split(" · ")[1] || s.name} <span class="mono" style="font-size:10px;opacity:0.8;">(${s.solRange})</span>
+        </button>
+      `).join("");
+
+      const poi = scene.pois.find((p) => p.id === state.selectedPoiId) || scene.pois[0];
+      document.getElementById("access-mars-poi-panel").innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p class="mono" style="font-size:10px;color:var(--cyan);">PUNTOS DE INTERÉS 3D EN ESCENA</p>
+          <span class="mono" style="font-size:9.5px;color:var(--fog);">${scene.elevationM} m MOLA</span>
+        </div>
+        <p style="font-size:11.5px;color:var(--fog);margin-top:4px;">${scene.summary}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+          ${scene.pois.map((p) => `<button class="chip ${p.id === poi.id ? 'active' : ''}" onclick="state.selectedPoiId='${p.id}';renderImmersive();">${p.title}</button>`).join("")}
+        </div>
+        <img src="${poi.img}" alt="${poi.title}" style="width:100%;height:125px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--line);" />
+        <h3 style="font-size:14px;margin-top:8px;">${poi.title}</h3>
+        <p style="font-size:11.5px;color:var(--fog);margin-top:4px;">${poi.text}</p>
+        <div style="margin-top:8px;padding:7px;background:var(--panel2);border-radius:9px;border:1px solid var(--line);">
+          <div class="mono" style="font-size:9px;color:var(--amber);margin-bottom:3px;">🔊 Narración NASA JPL:</div>
+          <audio controls preload="none" src="${poi.vo}" style="width:100%;height:28px;"></audio>
+        </div>
+      `;
+
+      const rPart = D.ROVER_SUBSYSTEMS.find((r) => r.id === state.selectedRoverId) || D.ROVER_SUBSYSTEMS[0];
+      document.getElementById("curiosity-rover-inspector").innerHTML = `
+        <p class="mono" style="font-size:10px;color:var(--amber);">INSTRUMENTOS 3D — ${m.name.toUpperCase()}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;">
+          ${m.instruments.map((inst) => `<span class="chip active">🔬 ${inst}</span>`).join("")}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+          ${D.ROVER_SUBSYSTEMS.map((r) => `<button class="chip ${r.id === rPart.id ? 'active' : ''}" onclick="state.selectedRoverId='${r.id}';renderImmersive();">⚙ ${r.title.split(' (')[0]}</button>`).join("")}
+        </div>
+        <h3 style="font-size:13.5px;margin-top:8px;">${rPart.title}</h3>
+        <p style="font-size:11.5px;color:var(--fog);margin-top:3px;">${rPart.text}</p>
+      `;
+    }
+
+    function renderDiscoveriesPage() {
+      const allDiscs = D.MISSIONS.flatMap((m) => m.discoveries.map((d) => ({ ...d, missionName: m.name, missionId: m.id })));
+      const kinds = ["all", "sample", "drill", "rock", "chemical", "experiment", "geology", "seismic", "flight"];
+      document.getElementById("discovery-filters").innerHTML = kinds.map((k) => `
+        <button class="chip ${state.discoveryKind === k ? 'active' : ''}" onclick="state.discoveryKind='${k}';renderDiscoveriesPage();">${k.toUpperCase()}</button>
+      `).join("");
+
+      const filtered = state.discoveryKind === "all" ? allDiscs : allDiscs.filter((d) => d.kind === state.discoveryKind);
+      document.getElementById("discoveries-grid").innerHTML = filtered.map((d) => `
+        <article class="card" style="background:var(--panel2);display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <img src="${d.img}" alt="${d.title}" style="width:100%;height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--line);" />
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+              <span class="badge badge-oficial mono">${d.validation} · ${d.missionName}</span>
+              <span class="mono" style="font-size:10px;color:var(--amber);">Sol ${d.sol} (${d.date})</span>
+            </div>
+            <h3 style="font-size:14.5px;margin-top:6px;">${d.title}</h3>
+            <p class="mono" style="font-size:10px;color:var(--cyan);margin-top:3px;">Instrumento: ${d.inst} · Cota: ${d.elevM} m MOLA</p>
+            <p style="font-size:11.5px;color:var(--fog);margin-top:6px;">${d.desc}</p>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);">
+            <button class="btn" onclick="selectMission('${d.missionId}');state.sol=${d.sol};switchMode('immersive');">Explorar en 3D (Sol ${d.sol})</button>
+            <a href="${d.url}" target="_blank" class="mono" style="font-size:10.5px;color:var(--cyan);">Fuente PDS/NASA ↗</a>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderTerrainPage() {
+      document.getElementById("terrain-sources-table").innerHTML = `
+        <thead>
+          <tr>
+            <th>Instrumento</th><th>Nombre Oficial</th><th>Resolución Espacial</th><th>Rango Espectral</th><th>Aplicación en el Atlas</th><th>Naturaleza</th><th>Enlace</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${D.TERRAIN_SOURCES.map((s) => `
+            <tr>
+              <td><strong style="color:var(--amber);">${s.id}</strong></td>
+              <td>${s.name}</td>
+              <td>${s.res}</td>
+              <td>${s.spec}</td>
+              <td>${s.app}</td>
+              <td><span class="badge badge-oficial mono">${s.nature}</span></td>
+              <td><a href="${s.url}" target="_blank" class="mono" style="color:var(--cyan);">PDS / Oficial ↗</a></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+
+      const regionalMaps = [
+        ["Jezero Crater", "/mars-terrain-library/craters_basins/jezero_crater.png", "Cráter / Cuenca Paleolacustre"],
+        ["Gale Crater", "/mars-terrain-library/craters_basins/gale_crater.png", "Cráter / Mount Sharp"],
+        ["Olympus Mons", "/mars-terrain-library/volcanoes/olympus_mons.png", "Volcán en Escudo (+21.2 km)"],
+        ["Melas Chasma (Valles Marineris)", "/mars-terrain-library/canyons_valleys/melas_chasma.png", "Cañón Tectónico"],
+        ["Kasei Valles", "/mars-terrain-library/canyons_valleys/kasei_valles.png", "Canal de Desbordamiento"],
+        ["Hellas Basin", "/mars-terrain-library/craters_basins/hellas_basin.png", "Cuenca de Impacto (-7,152 m)"],
+        ["Utopia Planitia", "/mars-terrain-library/major_regions/utopia_planitia.png", "Llanura Boreal / Hielo SHARAD"],
+        ["Planum Boreum (Polo Norte)", "/mars-terrain-library/polar_regions/planum_boreum_north_pole.png", "Casquete Polar Norte"],
+      ];
+      document.getElementById("regional-maps-grid").innerHTML = regionalMaps.map(([title, img, sub]) => `
+        <div class="card" style="background:var(--panel2);padding:10px;">
+          <img src="${img}" alt="${title}" style="width:100%;height:135px;object-fit:cover;border-radius:8px;" />
+          <div style="font-weight:700;margin-top:8px;">${title}</div>
+          <div class="mono" style="font-size:10px;color:var(--fog);">${sub}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderComparePage() {
+      document.getElementById("compare-missions-table").innerHTML = `
+        <thead>
+          <tr>
+            <th>Misión</th><th>Agencia</th><th>Categoría</th><th>Aterrizaje</th><th>Estado / Soles</th><th>Coordenadas IAU Mars 2000</th><th>Cota MOLA</th><th>Recorrido Real</th><th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${D.MISSIONS.map((m) => `
+            <tr>
+              <td><strong style="color:${m.color};">${m.name}</strong><br/><span style="font-size:10.5px;color:var(--fog);">${m.site}</span></td>
+              <td class="mono">${m.agency}</td>
+              <td class="mono" style="text-transform:uppercase;">${m.category}</td>
+              <td class="mono">${m.landing}</td>
+              <td class="mono">${m.status} (${m.maxSol} soles)</td>
+              <td class="mono" style="color:var(--cyan);">${Math.abs(m.lat).toFixed(4)}°${m.lat >= 0 ? 'N' : 'S'}, ${m.lon360.toFixed(4)}°E</td>
+              <td class="mono">${m.elevationM} m</td>
+              <td class="mono">${m.totalKm !== null ? m.totalKm + " km" : "Lander fijo (0 km)"}</td>
+              <td><button class="btn" onclick="selectMission('${m.id}');switchMode('immersive');">Abrir 3D →</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    }
+
+    function updateAll() {
+      const m = getMission();
+      const metrics = computeMetrics(m, state.sol);
+
+      renderMissionStrip();
+      document.getElementById("timeline-title").textContent = m.name.split(" (")[0].toUpperCase();
+      document.getElementById("timeline-subtitle").textContent = m.hasMobileTraverse
+        ? `· ${metrics.km} km (${metrics.elevM}m MOLA)`
+        : `· Estación fija (${m.elevationM}m MOLA)`;
+      document.getElementById("sol-counter").textContent = `Sol ${metrics.sol}/${m.maxSol}`;
+      const slider = document.getElementById("sol-slider");
+      slider.max = m.maxSol;
+      slider.value = metrics.sol;
+
+      document.getElementById("map-hud").innerHTML = `
+        Misión activa: <strong style="color:${m.color};">${m.name}</strong> · Sol ${metrics.sol} ·
+        ${Math.abs(metrics.lat).toFixed(4)}°${metrics.lat >= 0 ? 'N' : 'S'}, ${metrics.lon360.toFixed(4)}°E · Cota MOLA: <strong style="color:var(--cyan);">${metrics.elevM} m</strong>
+      `;
+
+      drawMarsMap();
+      renderElevationProfile(m, metrics);
+      renderMissionDossier(m, metrics);
+      if (state.mode === "immersive") renderImmersive();
+    }
+
+    document.getElementById("mars-map-canvas").addEventListener("mousemove", (e) => {
+      const rect = e.target.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 1200;
+      const y = ((e.clientY - rect.top) / rect.height) * 600;
+      const lon = (x / 1200) * 360 - 180;
+      const lat = 90 - (y / 600) * 180;
+      const lon360 = ((lon % 360) + 360) % 360;
+      document.getElementById("map-cursor-coords").textContent =
+        `Cursor IAU Mars 2000: ${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${lon360.toFixed(2)}°E`;
+    });
+
+    document.getElementById("mars-map-canvas").addEventListener("click", (e) => {
+      const rect = e.target.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 1200;
+      const y = ((e.clientY - rect.top) / rect.height) * 600;
+      let best = null, bestD = 30;
+      D.MISSIONS.forEach((m) => {
+        const mx = ((m.lon + 180) / 360) * 1200;
+        const my = ((90 - m.lat) / 180) * 600;
+        const dist = Math.hypot(x - mx, y - my);
+        if (dist < bestD) { bestD = dist; best = m; }
+      });
+      if (best) selectMission(best.id);
+    });
+
+    setInterval(() => {
+      const jd = Date.now() / 86400000 + 2440587.5;
+      const msd = (jd - 2451549.5) / 1.0274912517 + 44796.0 - 0.00096;
+      const mtc = ((msd % 1) + 1) % 1 * 24;
+      const hh = String(Math.floor(mtc)).padStart(2, "0");
+      const mm = String(Math.floor((mtc % 1) * 60)).padStart(2, "0");
+      const ss = String(Math.floor((((mtc % 1) * 60) % 1) * 60)).padStart(2, "0");
+      document.getElementById("mars-clock").textContent = `MSD ${msd.toFixed(2)} · MTC ${hh}:${mm}:${ss}`;
+    }, 1000);
+
+    renderLayersList();
+    updateAll();
+  </script>
+</body>
+</html>

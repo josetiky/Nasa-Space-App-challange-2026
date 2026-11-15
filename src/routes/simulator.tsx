@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/simulator")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Mission Simulator — MARS // SURVIVE" }, { name: "description", content: "Sol-by-sol Mars mission simulation with seeded events and an explainable decision engine." }] }),
+  head: () => ({ meta: [{ title: "Mission Simulator — M.I.Y.H." }, { name: "description", content: "Sol-by-sol Mars mission simulation with seeded events and an explainable decision engine." }] }),
   component: SimulatorPage,
 });
 

@@ -1,75 +1,53 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
-  Activity,
-  BrainCircuit,
-  CalendarClock,
-  ClipboardList,
-  Database,
-  FileText,
   FlaskConical,
-  Gem,
   Globe2,
+  Home,
   Layers,
-  LayoutDashboard,
+  Map as MapIcon,
   Menu,
   Moon,
-  ShieldCheck,
   Sun,
   TriangleAlert,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { formatHours, marsTimeFromDate, seasonName } from "@/core/science/marsTime";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { FlowStepper, StatusPill } from "@/components/mission/ui";
+import { StatusPill } from "@/components/mission/ui";
+import { MARS_MAPS, type MarsMapModule } from "@/data/marsMaps";
 import { useMolaGrid, useRems } from "@/services/nasa/hooks";
 import { useMission } from "@/state/missionStore";
 import { cn } from "@/lib/utils";
 
-const PRIMARY = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/explorer", label: "Mars Explorer", icon: Globe2 },
-  { to: "/atlas", label: "Survival Atlas", icon: Layers },
-  { to: "/planner", label: "Mission Planner", icon: ClipboardList },
-  { to: "/simulator", label: "Mission Simulator", icon: Activity },
-  { to: "/decisions", label: "Decision Intelligence", icon: BrainCircuit },
-  { to: "/nasa-data", label: "NASA Data", icon: Database },
-  { to: "/reports", label: "Mission Reports", icon: FileText },
-] as const;
+const MAP_ICONS: Readonly<Record<MarsMapModule["to"], typeof Globe2>> = {
+  "/explorer": Globe2,
+  "/atlas": Layers,
+  "/mission-lab": FlaskConical,
+  "/hazard-layers": TriangleAlert,
+  "/trek": MapIcon,
+};
 
-const REFERENCE = [
-  { to: "/hazard-layers", label: "Hazard Layers", icon: TriangleAlert },
-  { to: "/resources", label: "Resources", icon: Gem },
-  { to: "/protocols", label: "Survival Protocols", icon: ShieldCheck },
-  { to: "/mission-lab", label: "Mission Lab", icon: FlaskConical },
-  { to: "/sol-by-sol", label: "Sol by Sol (classic)", icon: CalendarClock },
-] as const;
-
-const FULL_BLEED = ["/explorer", "/atlas", "/mission-lab"];
+const FULL_BLEED = ["/explorer", "/atlas", "/mission-lab", "/trek", "/martian-map"];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  const sim = useMission((s) => s.sim);
-  const reports = useMission((s) => s.reports);
   const item = "group flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] text-fog transition hover:bg-ink2 hover:text-bright";
   const active = "bg-amber/10 text-bright ring-1 ring-amber/25";
   return (
-    <nav className="flex flex-col gap-0.5" aria-label="Modules">
-      <p className="px-3 pb-1.5 pt-1 font-mono text-[9px] uppercase tracking-[.22em] text-fog/80">Mission control</p>
-      {PRIMARY.map(({ to, label, icon: Icon, ...rest }) => (
-        <Link key={to} to={to} onClick={onNavigate} className={item} activeProps={{ className: active }} activeOptions={{ exact: "exact" in rest }}>
-          <Icon className="size-4 shrink-0 text-amber/80 group-hover:text-amber" />
-          <span className="truncate">{label}</span>
-          {to === "/simulator" && sim ? <span className={cn("ml-auto size-1.5 rounded-full", sim.status === "awaiting-decision" ? "beacon-dot bg-amber" : sim.status === "running" ? "bg-cyan" : "bg-mint")} /> : null}
-          {to === "/decisions" && sim?.pending ? <span className="ml-auto rounded-full bg-amber/15 px-1.5 font-mono text-[9px] text-amber">1</span> : null}
-          {to === "/reports" && reports.length ? <span className="ml-auto font-mono text-[9px] text-fog">{reports.length}</span> : null}
-        </Link>
-      ))}
-      <p className="px-3 pb-1.5 pt-4 font-mono text-[9px] uppercase tracking-[.22em] text-fog/80">Reference</p>
-      {REFERENCE.map(({ to, label, icon: Icon }) => (
-        <Link key={to} to={to} onClick={onNavigate} className={cn(item, "py-1.5 text-[12px]")} activeProps={{ className: active }}>
-          <Icon className="size-3.5 shrink-0 text-fog group-hover:text-bright" />
-          <span className="truncate">{label}</span>
-        </Link>
-      ))}
+    <nav className="flex flex-col gap-0.5" aria-label="Mapas de Marte">
+      <Link to="/" onClick={onNavigate} className={item} activeProps={{ className: active }} activeOptions={{ exact: true }}>
+        <Home className="size-4 shrink-0 text-amber/80 group-hover:text-amber" />
+        <span className="truncate">M.I.Y.H. · Inicio</span>
+      </Link>
+      <p className="px-3 pb-1.5 pt-4 font-mono text-[9px] uppercase tracking-[.22em] text-fog/80">Mapas de Marte</p>
+      {MARS_MAPS.map(({ to, search, label }) => {
+        const Icon = MAP_ICONS[to];
+        return (
+          <Link key={to} to={to} search={search ?? {}} onClick={onNavigate} className={item} activeProps={{ className: active }}>
+            <Icon className="size-4 shrink-0 text-amber/80 group-hover:text-amber" />
+            <span className="truncate">{label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
@@ -81,8 +59,8 @@ function Brand() {
         <span className="beacon-dot size-2.5 rounded-full bg-rose" />
       </div>
       <div className="leading-tight">
-        <p className="font-display text-[13px] font-bold tracking-tight text-bright">MARS // SURVIVE</p>
-        <p className="font-mono text-[8.5px] uppercase tracking-[.2em] text-fog">Intelligent Mission Control</p>
+        <p className="font-display text-[13px] font-bold tracking-tight text-bright">M.I.Y.H.</p>
+        <p className="font-mono text-[8.5px] uppercase tracking-[.2em] text-fog">Mars In Your Hands · Space Rockstars</p>
       </div>
     </Link>
   );
@@ -215,18 +193,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="lg:hidden">
-            <p className="font-display text-[12px] font-bold">MARS // SURVIVE</p>
+            <p className="font-display text-[12px] font-bold">M.I.Y.H.</p>
           </div>
           <div className="hidden min-w-0 flex-1 lg:block">
             <MarsClock />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <SimChip />
             <DataLinks />
           </div>
-        </div>
-        <div className="border-t border-line/60 px-4 py-1.5">
-          <FlowStepper compact />
         </div>
       </header>
 
@@ -234,9 +208,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="relative z-10 border-t border-line bg-ink/60">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-1 px-6 py-4 font-mono text-[10px] leading-relaxed text-fog sm:flex-row sm:justify-between">
-          <p>MARS // SURVIVE — Intelligent Mission Control · NASA Space Apps Challenge 2026</p>
+          <p>M.I.Y.H. — MARS IN YOUR HANDS · Space Rockstars · NASA Space Apps Challenge 2026</p>
           <p>
-            Data: NASA/JPL-Caltech, USGS, GSFC (MOLA), CAB/CSIC-INTA (REMS), CCMC (DONKI) · Surface terrain: Access Mars © Google Creative Lab (Apache-2.0). Models and simulations are labelled as such.
+            Data: NASA/JPL-Caltech, USGS, GSFC (MOLA), CAB/CSIC-INTA (REMS), CNSA/GRAS · Surface terrain: Access Mars © Google Creative Lab (Apache-2.0). Models and simulations are labelled as such.
           </p>
         </div>
       </footer>

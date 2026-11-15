@@ -17,7 +17,7 @@ const AtlasMap = lazy(() => import("@/components/atlas/AtlasMap"));
 
 export const Route = createFileRoute("/atlas")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Survival Atlas — MARS // SURVIVE" }, { name: "description", content: "Ten NASA-sourced survival layers for Mars with provenance, legends and site comparison." }] }),
+  head: () => ({ meta: [{ title: "Survival Atlas — M.I.Y.H." }, { name: "description", content: "Ten NASA-sourced survival layers for Mars with provenance, legends and site comparison." }] }),
   component: AtlasPage,
 });
 

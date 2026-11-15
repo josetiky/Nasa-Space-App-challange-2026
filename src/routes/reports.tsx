@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/reports")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Mission Reports — MARS // SURVIVE" }, { name: "description", content: "Outcome, decisions, incidents and consumption of every simulated mission, with exports." }] }),
+  head: () => ({ meta: [{ title: "Mission Reports — M.I.Y.H." }, { name: "description", content: "Outcome, decisions, incidents and consumption of every simulated mission, with exports." }] }),
   component: ReportsPage,
 });
 

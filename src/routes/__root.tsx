@@ -72,9 +72,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "Mars // Survive" },
-      { name: "theme-color", content: "#0d0b0a" },
-      { title: "MARS // SURVIVE — Intelligent Mission Control" },
+      { name: "author", content: "Space Rockstars" },
+      { name: "theme-color", content: "#04060b" },
+      { title: "M.I.Y.H. — Mars In Your Hands" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

@@ -1,5 +1,5 @@
 /**
- * Shared domain types for MARS // SURVIVE — Intelligent Mission Control.
+ * Shared domain types for M.I.Y.H. (Mars In Your Hands) — Intelligent Mission Control.
  * Coordinates are planetocentric degrees, east-positive, longitude in [-180, 180).
  */
 

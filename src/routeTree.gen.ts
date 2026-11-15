@@ -14,14 +14,17 @@ import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as DecisionsRouteImport } from './routes/decisions'
 import { Route as ExplorerRouteImport } from './routes/explorer'
 import { Route as HazardLayersRouteImport } from './routes/hazard-layers'
+import { Route as MartianMapRouteImport } from './routes/martian-map'
 import { Route as MissionLabRouteImport } from './routes/mission-lab'
 import { Route as NasaDataRouteImport } from './routes/nasa-data'
+import { Route as OverviewRouteImport } from './routes/overview'
 import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as ProtocolsRouteImport } from './routes/protocols'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as SolBySolRouteImport } from './routes/sol-by-sol'
+import { Route as TrekRouteImport } from './routes/trek'
 import { Route as ApiMarsAdvisorRouteImport } from './routes/api/mars-advisor'
 import { Route as ApiNasaDonkiRouteImport } from './routes/api/nasa/donki'
 import { Route as ApiNasaMolaRouteImport } from './routes/api/nasa/mola'
@@ -52,6 +55,11 @@ const HazardLayersRoute = HazardLayersRouteImport.update({
   path: '/hazard-layers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MartianMapRoute = MartianMapRouteImport.update({
+  id: '/martian-map',
+  path: '/martian-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MissionLabRoute = MissionLabRouteImport.update({
   id: '/mission-lab',
   path: '/mission-lab',
@@ -60,6 +68,11 @@ const MissionLabRoute = MissionLabRouteImport.update({
 const NasaDataRoute = NasaDataRouteImport.update({
   id: '/nasa-data',
   path: '/nasa-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OverviewRoute = OverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlannerRoute = PlannerRouteImport.update({
@@ -92,6 +105,11 @@ const SolBySolRoute = SolBySolRouteImport.update({
   path: '/sol-by-sol',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrekRoute = TrekRouteImport.update({
+  id: '/trek',
+  path: '/trek',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMarsAdvisorRoute = ApiMarsAdvisorRouteImport.update({
   id: '/api/mars-advisor',
   path: '/api/mars-advisor',
@@ -119,14 +137,17 @@ export interface FileRoutesByFullPath {
   '/decisions': typeof DecisionsRoute
   '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
+  '/martian-map': typeof MartianMapRoute
   '/mission-lab': typeof MissionLabRoute
   '/nasa-data': typeof NasaDataRoute
+  '/overview': typeof OverviewRoute
   '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
   '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
   '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
+  '/trek': typeof TrekRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
   '/api/nasa/donki': typeof ApiNasaDonkiRoute
   '/api/nasa/mola': typeof ApiNasaMolaRoute
@@ -138,14 +159,17 @@ export interface FileRoutesByTo {
   '/decisions': typeof DecisionsRoute
   '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
+  '/martian-map': typeof MartianMapRoute
   '/mission-lab': typeof MissionLabRoute
   '/nasa-data': typeof NasaDataRoute
+  '/overview': typeof OverviewRoute
   '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
   '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
   '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
+  '/trek': typeof TrekRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
   '/api/nasa/donki': typeof ApiNasaDonkiRoute
   '/api/nasa/mola': typeof ApiNasaMolaRoute
@@ -158,14 +182,17 @@ export interface FileRoutesById {
   '/decisions': typeof DecisionsRoute
   '/explorer': typeof ExplorerRoute
   '/hazard-layers': typeof HazardLayersRoute
+  '/martian-map': typeof MartianMapRoute
   '/mission-lab': typeof MissionLabRoute
   '/nasa-data': typeof NasaDataRoute
+  '/overview': typeof OverviewRoute
   '/planner': typeof PlannerRoute
   '/protocols': typeof ProtocolsRoute
   '/reports': typeof ReportsRoute
   '/resources': typeof ResourcesRoute
   '/simulator': typeof SimulatorRoute
   '/sol-by-sol': typeof SolBySolRoute
+  '/trek': typeof TrekRoute
   '/api/mars-advisor': typeof ApiMarsAdvisorRoute
   '/api/nasa/donki': typeof ApiNasaDonkiRoute
   '/api/nasa/mola': typeof ApiNasaMolaRoute
@@ -179,14 +206,17 @@ export interface FileRouteTypes {
     | '/decisions'
     | '/explorer'
     | '/hazard-layers'
+    | '/martian-map'
     | '/mission-lab'
     | '/nasa-data'
+    | '/overview'
     | '/planner'
     | '/protocols'
     | '/reports'
     | '/resources'
     | '/simulator'
     | '/sol-by-sol'
+    | '/trek'
     | '/api/mars-advisor'
     | '/api/nasa/donki'
     | '/api/nasa/mola'
@@ -198,14 +228,17 @@ export interface FileRouteTypes {
     | '/decisions'
     | '/explorer'
     | '/hazard-layers'
+    | '/martian-map'
     | '/mission-lab'
     | '/nasa-data'
+    | '/overview'
     | '/planner'
     | '/protocols'
     | '/reports'
     | '/resources'
     | '/simulator'
     | '/sol-by-sol'
+    | '/trek'
     | '/api/mars-advisor'
     | '/api/nasa/donki'
     | '/api/nasa/mola'
@@ -217,14 +250,17 @@ export interface FileRouteTypes {
     | '/decisions'
     | '/explorer'
     | '/hazard-layers'
+    | '/martian-map'
     | '/mission-lab'
     | '/nasa-data'
+    | '/overview'
     | '/planner'
     | '/protocols'
     | '/reports'
     | '/resources'
     | '/simulator'
     | '/sol-by-sol'
+    | '/trek'
     | '/api/mars-advisor'
     | '/api/nasa/donki'
     | '/api/nasa/mola'
@@ -237,14 +273,17 @@ export interface RootRouteChildren {
   DecisionsRoute: typeof DecisionsRoute
   ExplorerRoute: typeof ExplorerRoute
   HazardLayersRoute: typeof HazardLayersRoute
+  MartianMapRoute: typeof MartianMapRoute
   MissionLabRoute: typeof MissionLabRoute
   NasaDataRoute: typeof NasaDataRoute
+  OverviewRoute: typeof OverviewRoute
   PlannerRoute: typeof PlannerRoute
   ProtocolsRoute: typeof ProtocolsRoute
   ReportsRoute: typeof ReportsRoute
   ResourcesRoute: typeof ResourcesRoute
   SimulatorRoute: typeof SimulatorRoute
   SolBySolRoute: typeof SolBySolRoute
+  TrekRoute: typeof TrekRoute
   ApiMarsAdvisorRoute: typeof ApiMarsAdvisorRoute
   ApiNasaDonkiRoute: typeof ApiNasaDonkiRoute
   ApiNasaMolaRoute: typeof ApiNasaMolaRoute
@@ -288,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HazardLayersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/martian-map': {
+      id: '/martian-map'
+      path: '/martian-map'
+      fullPath: '/martian-map'
+      preLoaderRoute: typeof MartianMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mission-lab': {
       id: '/mission-lab'
       path: '/mission-lab'
@@ -300,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/nasa-data'
       fullPath: '/nasa-data'
       preLoaderRoute: typeof NasaDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/overview': {
+      id: '/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof OverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planner': {
@@ -344,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SolBySolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trek': {
+      id: '/trek'
+      path: '/trek'
+      fullPath: '/trek'
+      preLoaderRoute: typeof TrekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/mars-advisor': {
       id: '/api/mars-advisor'
       path: '/api/mars-advisor'
@@ -381,14 +441,17 @@ const rootRouteChildren: RootRouteChildren = {
   DecisionsRoute: DecisionsRoute,
   ExplorerRoute: ExplorerRoute,
   HazardLayersRoute: HazardLayersRoute,
+  MartianMapRoute: MartianMapRoute,
   MissionLabRoute: MissionLabRoute,
   NasaDataRoute: NasaDataRoute,
+  OverviewRoute: OverviewRoute,
   PlannerRoute: PlannerRoute,
   ProtocolsRoute: ProtocolsRoute,
   ReportsRoute: ReportsRoute,
   ResourcesRoute: ResourcesRoute,
   SimulatorRoute: SimulatorRoute,
   SolBySolRoute: SolBySolRoute,
+  TrekRoute: TrekRoute,
   ApiMarsAdvisorRoute: ApiMarsAdvisorRoute,
   ApiNasaDonkiRoute: ApiNasaDonkiRoute,
   ApiNasaMolaRoute: ApiNasaMolaRoute,

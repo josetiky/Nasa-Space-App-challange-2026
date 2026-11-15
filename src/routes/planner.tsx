@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/planner")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Mission Planner — MARS // SURVIVE" }, { name: "description", content: "Configure crew, habitat, power, supplies, ISRU and EVAs, validated against NASA consumption rates." }] }),
+  head: () => ({ meta: [{ title: "Mission Planner — M.I.Y.H." }, { name: "description", content: "Configure crew, habitat, power, supplies, ISRU and EVAs, validated against NASA consumption rates." }] }),
   component: PlannerPage,
 });
 
@@ -364,7 +364,7 @@ function PlannerPage() {
 
       <details className="mt-6 rounded-2xl border border-line bg-panel/60">
         <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-[13px] text-bright">
-          Quick estimator — original MARS // SURVIVE demonstration model <ChevronDown className="size-4 text-fog" />
+          Quick estimator — original M.I.Y.H. (Mars In Your Hands) demonstration model <ChevronDown className="size-4 text-fog" />
         </summary>
         <div className="border-t border-line p-4">
           <Notice tone="warn" className="mb-3">

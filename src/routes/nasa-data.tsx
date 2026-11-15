@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/nasa-data")({
   ssr: false,
-  head: () => ({ meta: [{ title: "NASA Data Center — MARS // SURVIVE" }, { name: "description", content: "Every NASA source used by the platform: live health checks, formats, terms and limitations." }] }),
+  head: () => ({ meta: [{ title: "NASA Data Center — M.I.Y.H." }, { name: "description", content: "Every NASA source used by the platform: live health checks, formats, terms and limitations." }] }),
   component: NasaDataPage,
 });
 

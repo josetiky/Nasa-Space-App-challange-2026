@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="description" content="Access Mars — Motor de Exploración 3D para las 11 Misiones de Superficie Marciana">
+        <meta charset="utf-8">
+
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+        <meta name="apple-touch-fullscreen" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+        <title>Access Mars 3D Engine — 11 Misiones de Superficie (NASA / ESA / CNSA)</title>
+        <link rel="stylesheet" type="text/css" href="css/vr.css">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:100" rel="stylesheet">
+
+        <script>
+          (function() {
+            var params = new URLSearchParams(window.location.search);
+            var changed = false;
+            if (!params.get("site")) { params.set("site", "perseverance_jezero"); changed = true; }
+            if (!params.get("modeType")) { params.set("modeType", "360"); changed = true; }
+            if (!params.get("hasSeenOrientation")) { params.set("hasSeenOrientation", "true"); changed = true; }
+            if (changed && window.history && window.history.replaceState) {
+              window.history.replaceState(null, "", window.location.pathname + "?" + params.toString());
+            }
+          })();
+        </script>
+        <script src="js/ga.js"></script>
+        <script src="js/fallback.js"></script>
+        <script src="js/splash.js"></script>
+        <script src="js/vr.js"></script>
+        <script src="js/multi-mission-3d.js"></script>
+    </head>
+
+    <body>
+
+        <div class="splash">
+            <header>
+                <span class="headerImage">
+                    <img class="headerPart" src="img/splash/title-access.png">
+                    <img class="headerPart" src="img/splash/title-mars.png">
+                </span>
+                <h3 class="headers">
+                    <span>Motor de Exploración 3D — Las 11 Misiones de Superficie Marciana</span>
+                    <span>NASA · JPL · Google Creative Lab · CNSA — Ahora en tu navegador.</span>
+                </h3>
+                <div id="enter-vr-container" style="color: #ffffff">
+                    <br>
+                    <a id="try-it-in-360" style="display: none;" href="javascript:void(0);">Explorar en 3D 360°</a>
+                </div>
+            </header>
+        </div>
+
+        <div class="footer">
+            <div class="gradient left"></div>
+            <div class="gradient right"></div>
+            <a href="#" class="about-btn">About</a>
+            <div class="terms">
+                <a href="https://www.google.com/intl/en/policies/privacy/" target="_blank">Privacy</a> &amp;&nbsp;<a href="https://www.google.com/intl/en/policies/terms/" target="_blank">Terms</a>
+            </div>
+            <ul class="credits">
+                <li><a href="https://webvrexperiments.com/" target="_blank"><img src="img/splash/webvr-experiment.png"></a></li>
+                <li><img src="img/splash/line.png"></li>
+                <li><img src="img/splash/google-friends.png"></li>
+                <li><img src="img/splash/line.png"></li>
+                <li><a href="https://mars.nasa.gov/" target="_blank"><img src="img/splash/nasa.png"></a></li>
+            </ul>
+        </div>
+
+        <div class="about">
+            <article>
+                <div class="close"></div>
+                <div class="experimentHeader">
+                    <h2>Motor 3D<br>Multi-Misión<br>Marte</h2>
+                    <div class="squiggleTint"></div>
+                    <p class="custom-text-width">Esta edición extendida del motor WebGL/A-Frame de Access Mars (Google Creative Lab &amp; NASA JPL OnSight) integra modelos de exploración 3D de superficie para las 11 misiones históricas que han operado sobre Marte: Perseverance, Curiosity, Ingenuity, Opportunity, Spirit, Zhurong, Sojourner, Viking 1, Viking 2, Phoenix e InSight.</p>
+                </div>
+            </article>
+        </div>
+
+        <ul class="scene-intro-labels">
+            <li data-site="landing_site">
+                01; Bradbury Landing; Curiosity (MSL); Aug 6, 2012 (Sol 0-20)
+            </li>
+            <li data-site="pahrump_hills">
+                02; Pahrump Hills; Curiosity (MSL); Sep 2014 - Mar 2015 (Sol 753-920)
+            </li>
+            <li data-site="marias_pass">
+                03; Marias Pass; Curiosity (MSL); May 2015 - Aug 2015 (Sol 992-1067)
+            </li>
+            <li data-site="murray_buttes">
+                04; Murray Buttes; Curiosity (MSL); Sep 2016 (Sol 1448-1452)
+            </li>
+            <li data-site="live_site">
+                05; Vera Rubin Ridge &amp; Boxwork; Curiosity (MSL); Sol 1834 - Present
+            </li>
+            <li data-site="perseverance_jezero">
+                06; Octavia E. Butler Landing; Perseverance (Mars 2020); Feb 18, 2021 (Sol 0-15)
+            </li>
+            <li data-site="perseverance_three_forks">
+                07; Three Forks Sample Depot; Perseverance (Mars 2020); Dec 2022 - Jan 2023 (Sol 623-690)
+            </li>
+            <li data-site="perseverance_cheyava">
+                08; Cheyava Falls (Neretva Vallis); Perseverance (Mars 2020); Jul 2024 (Sol 1215)
+            </li>
+            <li data-site="ingenuity_airfield">
+                09; Wright Brothers Field &amp; Airfield Chi; Ingenuity Mars Helicopter; Flights 1-72 (Sol 58-1050)
+            </li>
+            <li data-site="opportunity_eagle">
+                10; Eagle Crater Outcrop; Opportunity (MER-B); Jan - Mar 2004 (Sol 1-60)
+            </li>
+            <li data-site="opportunity_endeavour">
+                11; Endeavour Crater (Marathon Valley); Opportunity (MER-B); Aug 2011 - Jun 2018 (Sol 2681-5111)
+            </li>
+            <li data-site="spirit_gusev">
+                12; Home Plate &amp; Troy Silica Trench; Spirit (MER-A); Feb 2006 - Mar 2010 (Sol 744-2208)
+            </li>
+            <li data-site="zhurong_utopia">
+                13; Southern Utopia Planitia; Zhurong (Tianwen-1 CNSA); May 2021 - May 2022 (Sol 1-347)
+            </li>
+            <li data-site="sojourner_ares">
+                14; Carl Sagan Memorial Station; Sojourner (Mars Pathfinder); Jul - Sep 1997 (Sol 1-83)
+            </li>
+            <li data-site="viking1_chryse">
+                15; Thomas Mutch Station (Chryse Planitia); Viking 1 Lander; Jul 20, 1976 - Nov 1982 (Sol 1-2245)
+            </li>
+            <li data-site="viking2_utopia">
+                16; Gerald Soffen Station (Utopia Frost Plain); Viking 2 Lander; Sep 3, 1976 - Apr 1980 (Sol 1-1281)
+            </li>
+            <li data-site="phoenix_arctic">
+                17; Green Valley Permafrost (Vastitas Borealis); Phoenix Polar Lander; May - Nov 2008 (Sol 1-157)
+            </li>
+            <li data-site="insight_homestead">
+                18; Homestead Hollow (Elysium Planitia); InSight Geophysical Lander; Nov 2018 - Dec 2022 (Sol 1-1440)
+            </li>
+        </ul>
+
+        <video id="intro-video-webm" src="intro/intro.webm" playsinline style="display:block; z-index: 0; position:absolute;"></video>
+        <video id="intro-video-mp4" src="intro/intro.mp4" playsinline style="display:block; z-index: 0; position:absolute;"></video>
+
+        <div id="skip-intro">SKIP INTRO</div>
+
+        <a-scene id="scene" vr-mode-ui="enabled: false" fog="type: exponential; color: #e1cbb2; density: 0.01">
+
+            <a-entity id="player">
+
+                <a-camera id="camera" wasd-controls="fly: true" frustum>
+
+                    <a-entity id="mouse-touch-controller" better-raycaster="objects: .clickable; useCursor: true; controllerType: mouse-touch"></a-entity>
+                    <a-entity id="arc-dummy" position="-0.1 0 -0.25"></a-entity>
+                    <a-entity id="ui-dummy" position="0 0 -1.75"></a-entity>
+                    <a-entity id="ui-dummy-far" position="0 0 -6"></a-entity>
+                    <a-entity id="fader" fade-to-black></a-entity>
+
+                    <a-entity id="scene-label-intro" scene-intro-label scale="0.03 0.03 0.03" position="0, 0, -1">
+                        <a-entity class="progress-bg" geometry="primitive: plane; height: 0.4; width: 32" position="0 -3.5 0" material="shader: flat; color: white;"></a-entity>
+                        <a-entity class="progress" geometry="primitive: plane; height: 0.4; width: 32" scale="1 1 1" position="0 -3.5 0.0001" material="shader: flat; color: #133754;"></a-entity>
+                    </a-entity>
+
+                </a-camera>
+
+                <a-entity id="right-hand" shader="flat" better-raycaster="objects: .clickable; controllerType: controller" visible="false">
+                    <a-entity id="controller-ray" controller-ray></a-entity>
+                </a-entity>
+
+            </a-entity>
+
+            <a-entity id="boundary-sphere" class="clickable" boundary-sphere></a-entity>
+
+            <a-entity id="markers" visible="false" class="invisible">
+
+                <!-- 1. CURIOSITY: BRADBURY LANDING -->
+                <a-entity id="landing_site_markers" visible="false">
+                    <a-entity id="ls1" position="21 0 0" poi-marker="vo: ls3; img: cards/ls1.jpg; title: SATELLITE VIEW;">This photo taken from the Mars Reconnaissance Orbiter shows the Bradbury Landing site where you are standing now, along with the Sky Crane descent stage impact and parachute.</a-entity>
+                    <a-entity id="ls2" position="14 0 6" poi-marker="vo: ls2; img: cards/ls2.jpg; title: 3D STEREO PHOTOGRAMMETRY;">All the terrain around you has been reconstructed in 3D using stereo Navcam and Mastcam mosaics combined with orbital HiRISE elevation models.</a-entity>
+                    <a-entity id="ls3" position="-9 0 4" poi-marker="vo: ls1; img: cards/ls3.jpg; title: GOULBURN SCOUR &amp; CONGLOMERATES;">Sky Crane thrusters excavated the Goulburn gravel scour here, exposing rounded fluvial pebbles transported by ancient streams in Gale Crater.</a-entity>
+                </a-entity>
+
+                <!-- 2. CURIOSITY: MURRAY BUTTES -->
+                <a-entity id="murray_buttes_markers" visible="false">
+                    <a-entity position="13.8 1.2 6.9" poi-marker="vo: mb1; img: cards/mb1.jpg; title: MURRAY BUTTES;">These steep sandstone mesas and knob-like formations are as tall as a three-story building and mark Curiosity's gateway to Mount Sharp.</a-entity>
+                    <a-entity position="-10.56 1.80 -12.90" poi-marker="vo: mb2; img: cards/mb2.jpg; title: BRUCE MURRAY MEMORIAL;">Named after Caltech planetary scientist and JPL director Bruce Murray, who pioneered NASA's Mariner and Viking exploration of Mars.</a-entity>
+                    <a-entity position="21 6.2 3.7" poi-marker="vo: mb3; img: cards/mb3.jpg; title: STIMSON CROSS-BEDDED SANDSTONE;">Ancient wind-blown dunes petrified into cross-bedded sandstone, eroded over billions of years much like Monument Valley on Earth.</a-entity>
+                    <a-entity position="-63.5 -3.9 35.2" poi-marker="vo: mb4; img: cards/mb4.jpg; title: ORBITAL RELAY OCCULTATION;">Tall butte cliffs can partially block low-elevation UHF passes with Mars Reconnaissance Orbiter and MAVEN overhead.</a-entity>
+                </a-entity>
+
+                <!-- 3. CURIOSITY: PAHRUMP HILLS -->
+                <a-entity id="pahrump_hills_markers" visible="false">
+                    <a-entity position="1.9 1.0 -3.9" poi-marker="size: 0.01; vo: ph1; img: cards/ph1.jpg; title: PAHRUMP HILLS WALKABOUT;">Curiosity arrived at the basal Murray formation in September 2014 and performed a multi-pass geological walkabout just like a field geologist.</a-entity>
+                    <a-entity position="2.8 2.5 -7.3" poi-marker="size: 0.01; vo: ph2; img: cards/ph2.jpg; title: LACUSTRINE LAMINATIONS;">Finely laminated mudstones formed at the bottom of a long-lived freshwater lake inside Gale Crater 3.5 billion years ago.</a-entity>
+                    <a-entity position="6.98 1.13 -5.61" poi-marker="size: 0.01; vo: ph3; img: cards/ph3.jpg; title: CONFIDENCE HILLS &amp; MOJAVE DRILL;">Drilled samples analyzed by CheMin and SAM revealed hematite, magnetite, jarosite, and changing redox chemistry in the ancient lakebed.</a-entity>
+                    <a-entity position="-28.9 4.3 -10.7" poi-marker="vo: ph4; img: cards/ph4.jpg; title: AEOLIS MONS (MOUNT SHARP);">Rising 5.5 km above Gale Crater floor, Mount Sharp records Mars' transition from a clay-rich wet era to a sulfate-rich arid climate.</a-entity>
+                </a-entity>
+
+                <!-- 4. CURIOSITY: MARIAS PASS -->
+                <a-entity id="marias_pass_markers" visible="false">
+                    <a-entity position="8.85 -0.65 5.60" poi-marker="size: 0.015; vo: mp1; img: cards/mp1.jpg; title: UNCONFORMITY CONTACT;">In Marias Pass, younger eolian Stimson sandstone sits directly atop older lacustrine Murray mudstone across a sharp geological contact.</a-entity>
+                    <a-entity position="6.1 -0.3 22" poi-marker="size: 0.02; vo: mp2; img: cards/mp2.jpg; title: BUCKSKIN TRIDYMITE DRILL SITE;">The Buckskin sample revealed ~74% silica and unexpected tridymite, evidence of evolved silicic volcanism on ancient Mars.</a-entity>
+                    <a-entity position="10.8 -0.4 19.4" poi-marker="size: 0.02; vo: mp3; img: cards/mp3.jpg; title: MAHLI SELF-PORTRAIT;">Curiosity captured a composite MAHLI selfie here in August 2015 to inspect wheel grouser wear and dust accumulation.</a-entity>
+                    <a-entity position="2.16 -1.17 4.88" poi-marker="size: 0.02; vo: mp4; img: cards/mp4.jpg; title: SOLAR CONJUNCTION STANDDOWN;">Curiosity remained parked here throughout June 2015 while Mars passed behind the Sun relative to Earth.</a-entity>
+                </a-entity>
+
+                <!-- 5. CURIOSITY: LIVE SITE (VERA RUBIN RIDGE & BOXWORK) -->
+                <a-entity id="live_site_markers" visible="false">
+                    <a-entity position="14 0.5 5" poi-marker="vo: mb1; img: cards/mb1.jpg; title: VERA RUBIN HEMATITE RIDGE;">Erosion-resistant ridge rich in crystalline red hematite where Curiosity tested percussive feed-extended drilling techniques.</a-entity>
+                    <a-entity position="-11 1.0 -8" poi-marker="vo: ph2; img: cards/ph2.jpg; title: GEDIZ VALLIS ELEMENTAL SULFUR;">In 2024 Curiosity crushed a white rock in Gediz Vallis channel and discovered pure elemental sulfur crystals for the first time on Mars.</a-entity>
+                    <a-entity position="18 2.2 -9" poi-marker="vo: mp2; img: cards/mp2.jpg; title: MOUNT SHARP BOXWORK NETWORK;">Polygonal mineral-filled fracture ridges formed by ancient groundwater circulating through bedrock during the waning stages of habitable Mars.</a-entity>
+                </a-entity>
+
+                <!-- 6. PERSEVERANCE: JEZERO LANDING -->
+                <a-entity id="perseverance_jezero_markers" visible="false">
+                    <a-entity position="18 0 2" poi-marker="vo: ls3; img: cards/ls1.jpg; title: OCTAVIA E. BUTLER LANDING;">Perseverance touched down on February 18, 2021 at 18.38°N, 77.58°E inside Jezero Crater using Terrain-Relative Navigation (TRN) to avoid hazardous cliffs and dunes.</a-entity>
+                    <a-entity position="11 0 7" poi-marker="vo: ls2; img: cards/ls2.jpg; title: MAAZ &amp; SEITAH IGNEOUS FLOOR;">PIXL and SHERLOC revealed that the crater floor consists of olivine cumulate (Seitah) and basaltic lava flows (Maaz) altered by liquid water.</a-entity>
+                    <a-entity position="-10 0 5" poi-marker="vo: ls1; img: cards/ls3.jpg; title: KODIAK DELTA BUTTE REMNANT;">Steeply dipping foreset beds topped by horizontal topset boulder conglomerates confirm a stable ancient lake level and high-energy floods in Jezero.</a-entity>
+                </a-entity>
+
+                <!-- 7. PERSEVERANCE: THREE FORKS SAMPLE DEPOT -->
+                <a-entity id="perseverance_three_forks_markers" visible="false">
+                    <a-entity position="3.2 0.8 -4.2" poi-marker="size: 0.012; vo: ph1; img: cards/ph1.jpg; title: THREE FORKS TITANIUM DEPOT;">Between Sol 623 and 653, Perseverance deposited 10 sealed titanium sample tubes in a precise zigzag pattern as the backup cache for Mars Sample Return.</a-entity>
+                    <a-entity position="6.8 1.2 -6.0" poi-marker="size: 0.012; vo: ph3; img: cards/ph3.jpg; title: IGNEOUS, SEDIMENTARY &amp; ATMOSPHERIC CORES;">Includes cores from Bearwallow, Skyland, Malay, Coulettes, plus a regolith sample (Atmo Mountain) and witness tube.</a-entity>
+                    <a-entity position="-18 3.5 -9.5" poi-marker="vo: ph4; img: cards/ph4.jpg; title: WESTERN FAN DELTA FRONT;">Immediately behind Three Forks rises the 40-meter escarpment of the ancient Jezero river-lake delta.</a-entity>
+                </a-entity>
+
+                <!-- 8. PERSEVERANCE: CHEYAVA FALLS (NERETVA VALLIS) -->
+                <a-entity id="perseverance_cheyava_markers" visible="false">
+                    <a-entity position="7.5 -0.4 6.2" poi-marker="size: 0.015; vo: mp1; img: cards/mp1.jpg; title: CHEYAVA FALLS LEOPARD SPOTS;">In July 2024 (Sol 1215), Perseverance discovered millimeter-scale whitish reaction halos rimmed with iron-phosphate (vivianite) and iron-sulfide (greigite).</a-entity>
+                    <a-entity position="6.2 -0.2 19.5" poi-marker="size: 0.02; vo: mp2; img: cards/mp2.jpg; title: SAPPHIRE CANYON CORE #25;">SHERLOC detected organic carbon molecules alongside calcium sulfate veins and olivine inside the Bright Angel mudstone unit.</a-entity>
+                    <a-entity position="10.2 -0.3 16.0" poi-marker="size: 0.02; vo: mp3; img: cards/mp3.jpg; title: NERETVA VALLIS INFLOW CHANNEL;">Ancient river canyon that breached the western rim of Jezero Crater and fed water and sediment into the paleolake.</a-entity>
+                </a-entity>
+
+                <!-- 9. INGENUITY: WRIGHT BROTHERS FIELD & AIRFIELD CHI -->
+                <a-entity id="ingenuity_airfield_markers" visible="false">
+                    <a-entity position="16 0 1" poi-marker="vo: ls3; img: cards/ls1.jpg; title: WRIGHT BROTHERS FIELD (FLIGHT 1);">On April 19, 2021 (Sol 58), Ingenuity achieved the first powered, controlled aerodynamic flight on another planet, hovering at 3 meters altitude for 39.1 seconds.</a-entity>
+                    <a-entity position="12 0 6" poi-marker="vo: ls2; img: cards/ls2.jpg; title: FLIGHT 9 RECORD SEITAH CROSSING;">Ingenuity flew 625 meters at 5 m/s across the sandy ridges of South Seitah, scouting geological targets ahead of Perseverance.</a-entity>
+                    <a-entity position="-9 0 4" poi-marker="vo: ls1; img: cards/ls3.jpg; title: VALINOR HILLS (FLIGHT 72 FINALE);">After 72 flights, 17.0 km of distance, and 128.8 minutes airborne, Ingenuity suffered rotor-tip contact on bland sand ripples in Neretva Vallis in January 2024.</a-entity>
+                </a-entity>
+
+                <!-- 10. OPPORTUNITY: EAGLE CRATER -->
+                <a-entity id="opportunity_eagle_markers" visible="false">
+                    <a-entity position="2.2 1.0 -4.0" poi-marker="size: 0.012; vo: ph1; img: cards/ph1.jpg; title: EAGLE CRATER HOLE-IN-ONE;">On January 25, 2004, Opportunity rolled inside the 22-meter Eagle Crater in Meridiani Planum, directly in front of an exposed bedrock outcrop.</a-entity>
+                    <a-entity position="6.5 1.1 -5.5" poi-marker="size: 0.012; vo: ph3; img: cards/ph3.jpg; title: HEMATITE SPHERULES (BLUEBERRIES);">Mössbauer and Mini-TES confirmed these millimeter-sized gray concretions are crystalline hematite precipitated by ancient acidic groundwater.</a-entity>
+                    <a-entity position="3.0 2.2 -7.0" poi-marker="size: 0.012; vo: ph2; img: cards/ph2.jpg; title: JAROSITE &amp; SULFATE CROSS-BEDDING;">Festoon cross-lamination and hydrated iron-sulfate jarosite proved liquid water once soaked and flowed across Meridiani Planum.</a-entity>
+                </a-entity>
+
+                <!-- 11. OPPORTUNITY: ENDEAVOUR CRATER -->
+                <a-entity id="opportunity_endeavour_markers" visible="false">
+                    <a-entity position="13.5 1.2 6.8" poi-marker="vo: mb1; img: cards/mb1.jpg; title: CAPE YORK &amp; HOMESTAKE GYPSUM VEIN;">At the rim of the 22-km Endeavour Crater, Opportunity discovered the bright Homestake vein of pure hydrated calcium sulfate (gypsum).</a-entity>
+                    <a-entity position="-10.5 1.8 -12.5" poi-marker="vo: mb2; img: cards/mb2.jpg; title: MARATHON VALLEY SMECTITE CLAYS;">Between Sol 3950 and 4480, Opportunity explored clay-bearing Noachian rocks formed under neutral, life-friendly pH waters.</a-entity>
+                    <a-entity position="20.5 5.8 3.5" poi-marker="vo: mb3; img: cards/mb3.jpg; title: PERSEVERANCE VALLEY (45.16 KM);">Opportunity's final resting place after setting the off-Earth driving record of 45.16 km before the global dust storm of June 2018 (Sol 5111).</a-entity>
+                </a-entity>
+
+                <!-- 12. SPIRIT: GUSEV CRATER & HOME PLATE -->
+                <a-entity id="spirit_gusev_markers" visible="false">
+                    <a-entity position="8.5 -0.6 5.5" poi-marker="size: 0.015; vo: mp1; img: cards/mp1.jpg; title: HOME PLATE HYDROTHERMAL PLATEAU;">An 80-meter layered plateau of volcaniclastic deposits in the Inner Basin of the Columbia Hills inside Gusev Crater.</a-entity>
+                    <a-entity position="6.1 -0.3 21.5" poi-marker="size: 0.02; vo: mp2; img: cards/mp2.jpg; title: OPALINE SILICA TRENCH (90% SiO2);">On Sol 1148, Spirit's immobilized right-front wheel trenched bright white soil containing 90% opaline silica—smoking-gun evidence of ancient hot springs or fumaroles.</a-entity>
+                    <a-entity position="10.5 -0.4 18.8" poi-marker="size: 0.02; vo: mp3; img: cards/mp3.jpg; title: COMANCHE CARBONATE OUTCROP;">Mössbauer and Mini-TES identified 16–34% magnesium-iron carbonate in the Comanche outcrop, proving non-acidic hydrothermal activity.</a-entity>
+                </a-entity>
+
+                <!-- 13. ZHURONG: UTOPIA PLANITIA -->
+                <a-entity id="zhurong_utopia_markers" visible="false">
+                    <a-entity position="18 0 2" poi-marker="vo: ls3; img: cards/mb1.jpg; title: TIANWEN-1 LANDING PLATFORM;">On May 14, 2021, CNSA's Tianwen-1 lander and Zhurong rover touched down at 25.066°N, 109.925°E in southern Utopia Planitia.</a-entity>
+                    <a-entity position="13 0 6" poi-marker="vo: ls2; img: cards/mb2.jpg; title: RoPeR SUBSURFACE RADAR POLYGONS;">Zhurong's dual-frequency ground-penetrating radar imaged two graded flood layers down to 80 m depth and buried paleo-polygonal wedges at 35 m depth.</a-entity>
+                    <a-entity position="-9 0 4" poi-marker="vo: ls1; img: cards/mb3.jpg; title: HYDRATED DUNES &amp; SALINE FROST;">MarSCoDe laser spectroscopy detected hydrated sulfates, opaline silica, and iron oxides on cemented transverse eolian ridges from modern frost thaw.</a-entity>
+                </a-entity>
+
+                <!-- 14. SOJOURNER: ARES VALLIS -->
+                <a-entity id="sojourner_ares_markers" visible="false">
+                    <a-entity position="13.8 1.2 6.9" poi-marker="vo: mb1; img: cards/ls2.jpg; title: BARNACLE BILL &amp; YOGI BOULDERS;">Sojourner deployed its Alpha Proton X-Ray Spectrometer (APXS) against Barnacle Bill (silica-rich andesite) and Yogi (vesicular basalt).</a-entity>
+                    <a-entity position="-10.5 1.8 -12.9" poi-marker="vo: mb2; img: cards/ls1.jpg; title: CARL SAGAN MEMORIAL STATION;">Mars Pathfinder bounced to a halt in airbags on July 4, 1997, opened its three triangular solar petals, and deployed Sojourner down its metal ramps.</a-entity>
+                    <a-entity position="21 6.0 3.7" poi-marker="vo: mb3; img: cards/ls3.jpg; title: TWIN PEAKS &amp; CATASTROPHIC FLOOD PLAIN;">Imbricated boulders and streamlined hills visible on the horizon confirm Ares Vallis was carved by megafloods discharging into Chryse Planitia.</a-entity>
+                </a-entity>
+
+                <!-- 15. VIKING 1: CHRYSE PLANITIA -->
+                <a-entity id="viking1_chryse_markers" visible="false">
+                    <a-entity position="2.0 1.0 -3.9" poi-marker="size: 0.012; vo: ph1; img: cards/ph1.jpg; title: FIRST SPACECRAFT ON MARS (JULY 20, 1976);">Viking 1 Lander touched down at 22.27°N, 312.05°E in Chryse Planitia and operated continuously for over 6 Earth years (2,245 Sols).</a-entity>
+                    <a-entity position="6.9 1.1 -5.6" poi-marker="size: 0.012; vo: ph3; img: cards/ph3.jpg; title: SURFACE SAMPLER TRENCHES &amp; LABELED RELEASE;">The 3-meter collector boom dug trenches into drift soil; Labeled Release detected 14CO2 gas evolution driven by reactive soil superoxides and perchlorates.</a-entity>
+                    <a-entity position="-26 4.0 -10.0" poi-marker="vo: ph4; img: cards/ph4.jpg; title: BIG JOE BOULDER;">A 2-meter vesicular basalt block sitting 8 meters from the lander, surrounded by wind-sculpted fine regolith drifts.</a-entity>
+                </a-entity>
+
+                <!-- 16. VIKING 2: UTOPIA PLANITIA -->
+                <a-entity id="viking2_utopia_markers" visible="false">
+                    <a-entity position="8.8 -0.6 5.6" poi-marker="size: 0.015; vo: mp1; img: cards/mp1.jpg; title: SEASONAL WATER-ICE FROST PLAIN;">At 47.64°N in Utopia Planitia, Viking 2 photographed a bright white blanket of water-ice and CO2 frost coating the rocks during two Martian winters.</a-entity>
+                    <a-entity position="6.1 -0.3 21.8" poi-marker="size: 0.02; vo: mp2; img: cards/mp2.jpg; title: VESICULAR BASALT &amp; POLYGONAL TROUGH;">Gas-bubble pitted boulders and shallow thermal-contraction troughs cover the flat plain around Gerald Soffen Memorial Station.</a-entity>
+                    <a-entity position="10.6 -0.4 19.2" poi-marker="size: 0.02; vo: mp3; img: cards/mp3.jpg; title: BONNEVILLE ROCK PUSH &amp; UV-SHIELDED SOIL;">Viking 2 used its sampler arm to nudge aside rocks and collect subsurface soil shielded from solar ultraviolet radiation.</a-entity>
+                </a-entity>
+
+                <!-- 17. PHOENIX: GREEN VALLEY ARCTIC -->
+                <a-entity id="phoenix_arctic_markers" visible="false">
+                    <a-entity position="18 0 1" poi-marker="vo: ls3; img: cards/ls2.jpg; title: DODO-GOLDILOCKS &amp; SNOW WHITE ICE TRENCHES;">Phoenix's 2.35-m robotic arm scraped away 5 cm of arctic soil at 68.22°N, exposing bright water ice cubes that sublimated over four sols.</a-entity>
+                    <a-entity position="13 0 6" poi-marker="vo: ls2; img: cards/rm2.jpg; title: PERCHLORATES &amp; CALCIUM CARBONATE;">The MECA wet chemistry lab and TEGA thermal ovens discovered perchlorate salts (ClO4-), alkaline pH (7.7), and 3–5% calcium carbonate.</a-entity>
+                    <a-entity position="-9 0 4" poi-marker="vo: ls1; img: cards/rm1.jpg; title: CANADIAN LIDAR MARTIAN SNOWFALL;">On Sol 99, the zenith-pointing green laser lidar detected water-ice snow crystals falling from cirrus clouds 4 km above the arctic plains.</a-entity>
+                </a-entity>
+
+                <!-- 18. INSIGHT: HOMESTEAD HOLLOW -->
+                <a-entity id="insight_homestead_markers" visible="false">
+                    <a-entity position="18 0 1" poi-marker="vo: ls3; img: cards/mb1.jpg; title: SEIS SEISMOMETER &amp; 1,319 MARSQUAKES;">Placed directly on the ground under its white dome shield, SEIS detected 1,319 marsquakes including magnitude 4.7 event S1222a and measured Mars' 1,830-km liquid iron-alloy core.</a-entity>
+                    <a-entity position="13 0 6" poi-marker="vo: ls2; img: cards/mb2.jpg; title: HP3 HEAT FLOW MOLE &amp; DURICRUST;">The German HP3 percussion probe encountered an unexpectedly cemented, low-friction duricrust layer inside Homestead Hollow; the IDA scoop assisted in burying the mole.</a-entity>
+                    <a-entity position="-9 0 4" poi-marker="vo: ls1; img: cards/mb3.jpg; title: HOMESTEAD HOLLOW DEGRADED CRATER;">A 27-meter quasi-circular impact hollow filled with sandy regolith in western Elysium Planitia (4.5024°N, 135.6234°E).</a-entity>
+                </a-entity>
+
+            </a-entity>
+
+            <a-entity id="horizMarkers" visible="false">
+                <a-entity id="landing_site_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: -3;"></a-entity></a-entity>
+                <a-entity id="murray_buttes_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 10;"></a-entity></a-entity>
+                <a-entity id="pahrump_hills_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 20;"></a-entity></a-entity>
+                <a-entity id="marias_pass_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 10;"></a-entity></a-entity>
+                <a-entity id="live_site_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 20;"></a-entity></a-entity>
+                <a-entity id="perseverance_jezero_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 5;"></a-entity></a-entity>
+                <a-entity id="perseverance_three_forks_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 15;"></a-entity></a-entity>
+                <a-entity id="perseverance_cheyava_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 12;"></a-entity></a-entity>
+                <a-entity id="ingenuity_airfield_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 4;"></a-entity></a-entity>
+                <a-entity id="opportunity_eagle_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 8;"></a-entity></a-entity>
+                <a-entity id="opportunity_endeavour_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 14;"></a-entity></a-entity>
+                <a-entity id="spirit_gusev_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 16;"></a-entity></a-entity>
+                <a-entity id="zhurong_utopia_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 3;"></a-entity></a-entity>
+                <a-entity id="sojourner_ares_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 7;"></a-entity></a-entity>
+                <a-entity id="viking1_chryse_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 4;"></a-entity></a-entity>
+                <a-entity id="viking2_utopia_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 3;"></a-entity></a-entity>
+                <a-entity id="phoenix_arctic_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 2;"></a-entity></a-entity>
+                <a-entity id="insight_homestead_horizMarkers" visible="false"><a-entity horizon-marker="azimuth: 130; elevation: 3;"></a-entity></a-entity>
+            </a-entity>
+
+            <a-entity id="rover-markers" class="invisible">
+                <a-entity id="rover_poi_arm" rover-poi="title: Robotic Arm &amp; Turret; target: arm; img: cards/rm4.jpg; vo: rover1;">The 2.1-meter robotic arm deploys a rotary-percussive drill, dust removal brush, microscopic imager, and X-ray/UV spectrometers directly onto Martian rocks.</a-entity>
+                <a-entity id="rover_poi_mast" rover-poi="title: Remote Sensing Mast; target: mast; img: cards/rm1.jpg; vo: rover2;">Houses stereo Navigation Cameras, high-resolution Mastcams, and laser spectroscopy (ChemCam / SuperCam) that vaporizes rock up to 7 meters away.</a-entity>
+                <a-entity id="rover_poi_analysis" rover-poi="title: Internal Analytical Suite; target: chassis; channel: b; img: cards/rm2.jpg; vo: rover3;">Inside the warm electronics box sit analytical laboratories and sample handling systems that decode Martian mineralogy and organic chemistry.</a-entity>
+                <a-entity id="rover_poi_rtg" rover-poi="title: MMRTG Nuclear Power; target: chassis; channel: g; img: cards/rm3.jpg; vo: rover4;">The Multi-Mission Radioisotope Thermoelectric Generator converts heat from plutonium-238 dioxide into continuous electrical power day and night.</a-entity>
+                <a-entity id="rover_poi_uhf" rover-poi="title: UHF Orbital Relay Antenna; target: chassis; channel: r; img: cards/rm5.jpg; vo: rover5;">Transmits high-volume science telemetry and stereo imagery to Mars orbiters (MRO, Odyssey, MAVEN, TGO) for relay to the Deep Space Network.</a-entity>
+                <a-entity id="rover_poi_suspension" rover-poi="title: 6-Wheel Rocker-Bogie Mobility; target: suspension; img: cards/rm6.jpg; vo: rover6;">Six independently driven 50-cm aluminum wheels on a titanium rocker-bogie suspension allow the rover to climb 30-degree slopes and rocks.</a-entity>
+            </a-entity>
+
+            <a-entity id="sky" sky-gradient></a-entity>
+
+            <a-entity id="terrain-container"></a-entity>
+
+            <a-entity id="map-card" map-card visible="false">
+                <a-entity id="map-card-offset">
+                    <a-entity id="back-meshes"></a-entity>
+                    <a-entity id="map-markers">
+                        <a-entity map-marker="index: 1; site: landing_site" position="0.65 0.225 0"></a-entity>
+                        <a-entity map-marker="index: 2; site: pahrump_hills" position="-0.27 0.047 0"></a-entity>
+                        <a-entity map-marker="index: 3; site: marias_pass" position="-0.42 0.005 0"></a-entity>
+                        <a-entity map-marker="index: 4; site: murray_buttes" position="-0.66 -0.055 0"></a-entity>
+                    </a-entity>
+                    <a-entity id="map-site-cards">
+                        <a-entity id="map-landing_site"  map-site-card="index: 1; title: Bradbury Landing; site: landing_site; distance: 0km"></a-entity>
+                        <a-entity id="map-pahrump_hills" map-site-card="index: 2; title: Pahrump Hills; site: pahrump_hills; distance: 9.7km"></a-entity>
+                        <a-entity id="map-marias_pass"   map-site-card="index: 3; title: Marias Pass; site: marias_pass; distance: 10.8km"></a-entity>
+                        <a-entity id="map-murray_buttes" map-site-card="index: 4; title: Murray Buttes; site: murray_buttes; distance: 14.1km"></a-entity>
+                        <a-entity id="map-live_site"     map-site-card="index: 5; title: Vera Rubin Ridge; site: live_site; distance: 17.5km"></a-entity>
+                        <a-entity id="map-perseverance_jezero"      map-site-card="index: 6; title: Jezero Landing; site: perseverance_jezero; distance: 0km"></a-entity>
+                        <a-entity id="map-perseverance_three_forks" map-site-card="index: 7; title: Three Forks Depot; site: perseverance_three_forks; distance: 14.3km"></a-entity>
+                        <a-entity id="map-perseverance_cheyava"     map-site-card="index: 8; title: Cheyava Falls; site: perseverance_cheyava; distance: 28.9km"></a-entity>
+                        <a-entity id="map-ingenuity_airfield"       map-site-card="index: 9; title: Wright Bros Field; site: ingenuity_airfield; distance: 17.2km"></a-entity>
+                        <a-entity id="map-opportunity_eagle"        map-site-card="index: 10; title: Eagle Crater; site: opportunity_eagle; distance: 0km"></a-entity>
+                        <a-entity id="map-opportunity_endeavour"    map-site-card="index: 11; title: Endeavour Crater; site: opportunity_endeavour; distance: 45.2km"></a-entity>
+                        <a-entity id="map-spirit_gusev"             map-site-card="index: 12; title: Home Plate Gusev; site: spirit_gusev; distance: 7.7km"></a-entity>
+                        <a-entity id="map-zhurong_utopia"           map-site-card="index: 13; title: Utopia Planitia; site: zhurong_utopia; distance: 1.9km"></a-entity>
+                        <a-entity id="map-sojourner_ares"           map-site-card="index: 14; title: Carl Sagan Station; site: sojourner_ares; distance: 0.1km"></a-entity>
+                        <a-entity id="map-viking1_chryse"           map-site-card="index: 15; title: Chryse Planitia; site: viking1_chryse; distance: 0km"></a-entity>
+                        <a-entity id="map-viking2_utopia"           map-site-card="index: 16; title: Utopia Frost Plain; site: viking2_utopia; distance: 0km"></a-entity>
+                        <a-entity id="map-phoenix_arctic"           map-site-card="index: 17; title: Green Valley Arctic; site: phoenix_arctic; distance: 0km"></a-entity>
+                        <a-entity id="map-insight_homestead"        map-site-card="index: 18; title: Homestead Hollow; site: insight_homestead; distance: 0km"></a-entity>
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+
+            <a-entity id="info-card" info-card visible="false"></a-entity>
+
+            <a-entity id="orientation-card" orientation-card="title: How To Access Mars:;" visible="false">
+                <a-entity id="orientation-back-meshes"></a-entity>
+                <a-entity orientation-card-column="title: Learn;  img: intro1; text: Click 3D points of interest and spacecraft instruments on any of the 11 missions."></a-entity>
+                <a-entity orientation-card-column="title: Move;   img: intro2; text: Click anywhere on the 3D Martian terrain to teleport across the surface."></a-entity>
+                <a-entity orientation-card-column="title: Switch; img: intro3; text: Use the top 3D Mission Bar to jump between all 11 Mars missions and 18 3D sites."></a-entity>
+            </a-entity>
+
+            <a-entity id="controller-dot" controller-dot></a-entity>
+            <a-entity id="controller-arc" controller-arc></a-entity>
+            <a-entity id="controller-parabola" controller-parabola></a-entity>
+
+        </a-scene>
+
+        <div id="fallback">
+            <div id="text"> Oops. Sorry for the tech trouble. Try <a href="https://www.google.com/chrome/browser/">Chrome Browser</a> instead. </div>
+        </div>
+
+        <div id="exitButton"></div>
+
+    </body>
+</html>

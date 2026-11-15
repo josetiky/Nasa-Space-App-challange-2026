@@ -8,7 +8,7 @@ import { createHeightGrid, findSafePath, rasterizeTriangles, type HeightGrid } f
 import { gcrDosePerSol, pressureAt } from "@/core/science/environment";
 import { EVA } from "@/core/science/constants";
 import type { EvaPlan, EvaWaypoint } from "@/core/types";
-import type { EvaPoi, EvaSite } from "@/data/evaSites";
+import { CURIOSITY_ROVER_PARTS, type EvaPoi, type EvaSite, type RoverPartPoi } from "@/data/evaSites";
 
 type Sample = { x: number; y: number; z: number };
 
@@ -76,7 +76,6 @@ function Terrain({ site, onReady, onPick }: { site: EvaSite; onReady: (info: Ter
       object.material = material;
       object.receiveShadow = true;
       tiles.push(object);
-      // Progressive textures: extra-small first, then the base tile (tiles without a base only have _sm).
       const chain = meta.md ? [`${meta.id}_xsm`, meta.id] : [`${meta.id}_sm`];
       void (async () => {
         for (const name of chain) {
@@ -98,7 +97,6 @@ function Terrain({ site, onReady, onPick }: { site: EvaSite; onReady: (info: Ter
     const raycaster = new THREE.Raycaster();
     const down = new THREE.Vector3(0, -1, 0);
     const targets: THREE.Object3D[] = simple ? [simple] : tiles;
-    // World-space triangles of the collision surface (computed once, reused by every route search).
     let world: Array<{ positions: Float32Array; index: ArrayLike<number> | undefined }> | null = null;
     const worldTriangles = () => {
       if (world) return world;
@@ -147,6 +145,70 @@ function Terrain({ site, onReady, onPick }: { site: EvaSite; onReady: (info: Ter
   );
 }
 
+/** Access Mars Curiosity Rover 3D mesh (/eva/rover/scene.glb) with interactive subsystem markers. */
+function AccessMarsCuriosityRover({
+  groundY,
+  showPartMarkers,
+  activeRoverPart,
+  onSelectRoverPart,
+}: {
+  groundY: number;
+  showPartMarkers: boolean;
+  activeRoverPart: RoverPartPoi | null;
+  onSelectRoverPart?: (part: RoverPartPoi) => void;
+}) {
+  const gltf = useGLTF("/eva/rover/scene.glb", "/draco/");
+  const roverScene = useMemo(() => {
+    const clone = gltf.scene.clone(true);
+    clone.traverse((obj) => {
+      const n = (obj.name || "").toUpperCase();
+      if (n.includes("SKYCRANE") || n.includes("LINES") || n.includes("IMAGEPLANE") || n.includes("HITBOX")) {
+        obj.visible = false;
+      }
+      if (obj instanceof THREE.Mesh) {
+        obj.material = new THREE.MeshStandardMaterial({
+          color: "#d6d3cd",
+          roughness: 0.48,
+          metalness: 0.55,
+        });
+      }
+    });
+    return clone;
+  }, [gltf.scene]);
+
+  return (
+    <group position={[0, groundY, 0]}>
+      <group scale={0.01} rotation={[0, Math.PI / 2, 0]}>
+        <primitive object={roverScene} />
+      </group>
+      {showPartMarkers
+        ? CURIOSITY_ROVER_PARTS.map((part) => {
+            const active = activeRoverPart?.id === part.id;
+            return (
+              <group key={part.id} position={part.position}>
+                <mesh
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectRoverPart?.(part);
+                  }}
+                >
+                  <sphereGeometry args={[0.18, 16, 16]} />
+                  <meshBasicMaterial color={active ? "#fbbf24" : "#34d399"} toneMapped={false} />
+                </mesh>
+                <LabelSprite
+                  text={`⚙ ${part.title.split(" (")[0]}`}
+                  position={[0, 0.55, 0]}
+                  active={active}
+                  onClick={() => onSelectRoverPart?.(part)}
+                />
+              </group>
+            );
+          })
+        : null}
+    </group>
+  );
+}
+
 function slopeColor(deg: number): [number, number, number] {
   if (deg >= EVA.noGoSlopeDeg) return [0.94, 0.33, 0.29];
   if (deg >= EVA.cautionSlopeDeg) return [0.96, 0.62, 0.04];
@@ -166,7 +228,6 @@ class TerrainBoundary extends Component<{ children: ReactNode; onError: (message
   }
 }
 
-/** Text label as a camera-facing sprite (canvas texture) — no extra React roots inside the WebGL tree. */
 function LabelSprite({ text, position, active, onClick }: { text: string; position: [number, number, number]; active: boolean; onClick: () => void }) {
   const { texture, aspect } = useMemo(() => {
     const canvas = document.createElement("canvas");
@@ -197,7 +258,6 @@ function LabelSprite({ text, position, active, onClick }: { text: string; positi
   );
 }
 
-/** Development-only handle for automated visual checks (stripped from production by the DEV guard). */
 function DevHandle() {
   const { camera, scene } = useThree();
   useEffect(() => {
@@ -206,7 +266,6 @@ function DevHandle() {
   return null;
 }
 
-/** First-person camera along the EVA timeline (eye height 1.7 m), reporting HUD state ~10×/s. */
 function WalkRig({ timeline, minutesPerSecond, paused, onUpdate, onDone }: { timeline: WalkTimeline; minutesPerSecond: number; paused: boolean; onUpdate: (s: WalkState) => void; onDone: (s: WalkState) => void }) {
   const { camera, controls } = useThree();
   const t = useRef(0);
@@ -232,7 +291,6 @@ function WalkRig({ timeline, minutesPerSecond, paused, onUpdate, onDone }: { tim
     if (!paused && !finished.current) t.current += Math.min(delta, 0.1) * minutesPerSecond;
     const s = sampleWalk(timeline, t.current);
     const [x, y, z] = s.position;
-    // Look 6 m ahead along the route (or at the next frame while stopped).
     const ahead = sampleWalk(timeline, Math.min(timeline.totalMinutes, t.current + Math.max(0.05, 6 / 50)));
     const target = new THREE.Vector3(ahead.position[0], ahead.position[1] + 1.5, ahead.position[2]);
     if (target.distanceTo(new THREE.Vector3(x, y + 1.7, z)) < 0.5 && look.current) target.copy(look.current);
@@ -259,7 +317,6 @@ const hhmm = (minutes: number) => {
   return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 };
 
-/** GCR dose-equivalent rate at the Access Mars sites (Gale floor), mSv per minute — MODELLED. */
 const GALE_DOSE_PER_MIN = gcrDosePerSol(pressureAt(-4450)) / (24.6597 * 60);
 
 function Hud({ state, timeline, plan, speed, paused, onSpeed, onPause, onExit }: { state: WalkState | null; timeline: WalkTimeline; plan: EvaPlan; speed: number; paused: boolean; onSpeed: (v: number) => void; onPause: () => void; onExit: () => void }) {
@@ -269,7 +326,6 @@ function Hud({ state, timeline, plan, speed, paused, onSpeed, onPause, onExit }:
   const progress = Math.min(1, state.minutes / Math.max(1e-6, timeline.totalMinutes));
   const stopFrame = state.stop ? timeline.frames.find((f) => f.stop === state.stop) : null;
   const stopLeft = stopFrame ? stopFrame.minutes + EVA.stopMinutes - state.minutes : 0;
-  // Values stay in normal case: uppercasing "µSv" would read as "MSV".
   const panel = "rounded-lg border border-cyan-300/30 bg-black/35 px-3 py-2 font-mono text-[11px] tracking-[.06em] text-cyan-100 backdrop-blur-[2px]";
   return (
     <div className="pointer-events-none absolute inset-0 select-none">
@@ -351,9 +407,11 @@ export interface SurfaceEvaProps {
   onPlan: (plan: EvaPlan | null) => void;
   onPoi: (poi: EvaPoi | null) => void;
   activePoi: EvaPoi | null;
+  activeRoverPart?: RoverPartPoi | null;
+  onSelectRoverPart?: (part: RoverPartPoi | null) => void;
 }
 
-export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: SurfaceEvaProps) {
+export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi, activeRoverPart = null, onSelectRoverPart }: SurfaceEvaProps) {
   const [terrain, setTerrain] = useState<TerrainInfo | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [waypoints, setWaypoints] = useState<EvaWaypoint[]>(() => (initial && initial.siteId === site.id ? initial.waypoints : []));
@@ -364,8 +422,8 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
   const [walkState, setWalkState] = useState<WalkState | null>(null);
   const [routeNote, setRouteNote] = useState<{ text: string; tone: "ok" | "warn" } | null>(null);
   const [beforeRoute, setBeforeRoute] = useState<EvaWaypoint[] | null>(null);
+  const [showRoverParts, setShowRoverParts] = useState(true);
 
-  /** Replace each straight leg by an A* path that avoids caution slopes and never crosses no-go terrain. */
   const planSafeRoute = () => {
     if (!terrain || waypoints.length < 2) return;
     const next: EvaWaypoint[] = [waypoints[0]!];
@@ -410,7 +468,6 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
 
   const pois = useMemo(() => site.pois.map((poi) => ({ poi, y: terrain?.ground(poi.position[0], poi.position[2]) ?? 0 })), [site.pois, terrain]);
 
-  // Dense, terrain-following samples for every leg (1 m spacing).
   const samples = useMemo<Sample[][]>(() => {
     if (!terrain) return [];
     return waypoints.slice(1).map((b, i) => {
@@ -488,10 +545,24 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
             <LabelSprite text={poi.title} position={[0, 3.2, 0]} active={activePoi?.id === poi.id} onClick={() => onPoi(poi)} />
           </group>
         ))}
-        <mesh position={[0, (terrain?.ground(0, 0) ?? 0) + 0.6, 0]}>
-          <boxGeometry args={[2.8, 1.2, 2.2]} />
-          <meshStandardMaterial color="#e5e7eb" />
-        </mesh>
+        <Suspense
+          fallback={
+            <mesh position={[0, (terrain?.ground(0, 0) ?? 0) + 0.6, 0]}>
+              <boxGeometry args={[2.8, 1.2, 2.2]} />
+              <meshStandardMaterial color="#e5e7eb" />
+            </mesh>
+          }
+        >
+          <AccessMarsCuriosityRover
+            groundY={terrain?.ground(0, 0) ?? 0}
+            showPartMarkers={showRoverParts && !walking}
+            activeRoverPart={activeRoverPart}
+            onSelectRoverPart={(part) => {
+              onPoi(null);
+              onSelectRoverPart?.(part);
+            }}
+          />
+        </Suspense>
         {waypoints.map((w, i) =>
           walking && walkState && Math.hypot(w.x - walkState.position[0], w.z - walkState.position[2]) <= 3 ? null : (
           <mesh key={w.id} position={[w.x, w.y + 0.4, w.z]}>
@@ -508,7 +579,7 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
       {!terrain || loadError ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <div className={loadError ? "rounded-lg bg-black/75 px-3 py-2 font-mono text-[11px] text-rose" : "rounded-full bg-black/70 px-4 py-2 font-mono text-[10px] uppercase tracking-[.16em] text-white"}>
-            {loadError ? `Terrain failed to load (${site.basePath}/terrain.glb): ${loadError}` : "Decoding Curiosity terrain…"}
+            {loadError ? `Terrain failed to load (${site.basePath}/terrain.glb): ${loadError}` : "Decoding Curiosity photogrammetric terrain (Draco + progressive tiles)…"}
           </div>
         </div>
       ) : null}
@@ -516,11 +587,21 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
         <Hud state={walkState} timeline={timeline} plan={plan} speed={speed} paused={paused} onSpeed={setSpeed} onPause={() => setPaused((p) => !p)} onExit={() => (setWalking(false), setWalkState(null), setPaused(false))} />
       ) : null}
       <div className={`pointer-events-auto absolute left-3 top-3 flex flex-wrap gap-1.5 ${walking ? "hidden" : ""}`}>
+        <span className="rounded-lg border border-emerald-400/50 bg-emerald-950/75 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[.12em] text-emerald-300">
+          TIPO A · FOTOGRAMETRÍA 3D REAL (NAVCAM / MASTCAM)
+        </span>
         <button type="button" className="rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-2.5 py-1 font-mono text-[10.5px] text-cyan-50 disabled:opacity-40" disabled={!timeline} onClick={() => (setWalkState(null), setPaused(false), setWalking(true))}>
           Walk route (helmet HUD)
         </button>
         <button type="button" className="rounded-lg border border-emerald-300/40 bg-emerald-500/20 px-2.5 py-1 font-mono text-[10.5px] text-emerald-50 disabled:opacity-40" disabled={!terrain || waypoints.length < 2} onClick={planSafeRoute} title="Reroute every leg with A* over the terrain mesh, avoiding slopes ≥ 15° where possible and never crossing ≥ 25°">
           Safe route (A*)
+        </button>
+        <button
+          type="button"
+          className={`rounded-lg border px-2.5 py-1 font-mono text-[10.5px] ${showRoverParts ? "border-amber-300/50 bg-amber-500/20 text-amber-100" : "border-white/15 bg-black/65 text-white/80"}`}
+          onClick={() => setShowRoverParts((v) => !v)}
+        >
+          {showRoverParts ? "Rover POIs: ON" : "Rover POIs: OFF"}
         </button>
         {beforeRoute ? (
           <button type="button" className="rounded-lg border border-white/15 bg-black/65 px-2.5 py-1 font-mono text-[10.5px] text-white" onClick={() => (setWaypoints(beforeRoute), setBeforeRoute(null), setRouteNote(null))}>
@@ -533,7 +614,7 @@ export default function SurfaceEva({ site, initial, onPlan, onPoi, activePoi }: 
         <button type="button" className="rounded-lg border border-white/15 bg-black/65 px-2.5 py-1 font-mono text-[10.5px] text-white disabled:opacity-40" disabled={!waypoints.length} onClick={() => setWaypoints([])}>
           Clear route
         </button>
-        <span className="rounded-lg border border-white/15 bg-black/55 px-2.5 py-1 font-mono text-[10.5px] text-white/80">Click the ground to add waypoints · click a blue marker for the POI card</span>
+        <span className="rounded-lg border border-white/15 bg-black/55 px-2.5 py-1 font-mono text-[10.5px] text-white/80">Click ground for EVA waypoints · blue cones = terrain POIs · green spheres = Curiosity 3D parts</span>
         {routeNote ? (
           <span className={`basis-full rounded-lg border px-2.5 py-1 font-mono text-[10.5px] ${routeNote.tone === "ok" ? "border-emerald-300/40 bg-black/70 text-emerald-200" : "border-amber-300/50 bg-black/70 text-amber-200"}`}>{routeNote.text}</span>
         ) : null}

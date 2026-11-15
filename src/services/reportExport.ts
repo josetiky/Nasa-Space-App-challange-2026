@@ -32,7 +32,7 @@ export function reportToMarkdown(r: MissionReport): string {
     "",
     `Site: ${r.siteName} · crew ${r.crewSize} · ${r.solsCompleted}/${r.durationSols} sols · seed ${r.seed}`,
     `Outcome: **${r.outcome.toUpperCase()}**${r.failureCause ? ` — ${r.failureCause}` : ""}`,
-    `Generated ${r.generatedAt} by MARS // SURVIVE. All values are simulation outputs (seeded, reproducible) built on NASA-sourced site data; they are not mission-certified figures.`,
+    `Generated ${r.generatedAt} by M.I.Y.H. (Mars In Your Hands). All values are simulation outputs (seeded, reproducible) built on NASA-sourced site data; they are not mission-certified figures.`,
     "",
     "## Final state",
     "",

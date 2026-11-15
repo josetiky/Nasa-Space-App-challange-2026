@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/decisions")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Decision Intelligence — MARS // SURVIVE" }, { name: "description", content: "Deterministic, explainable decision engine: rules, Monte-Carlo look-ahead and multi-criteria analysis." }] }),
+  head: () => ({ meta: [{ title: "Decision Intelligence — M.I.Y.H." }, { name: "description", content: "Deterministic, explainable decision engine: rules, Monte-Carlo look-ahead and multi-criteria analysis." }] }),
   component: DecisionsPage,
 });
 

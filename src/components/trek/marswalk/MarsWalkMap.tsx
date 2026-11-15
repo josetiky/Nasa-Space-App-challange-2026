@@ -249,6 +249,7 @@ export function MarsWalkMap() {
               onClick={() => dispatchTrek({ type: "setPickMode", mode: m })}
             >
               <svg viewBox="0 0 16 16">{PICK_ICONS[m]}</svg>
+              <span className="icon-btn__label">{t.pick[m]}</span>
             </button>
           ))}
           <button
@@ -261,6 +262,7 @@ export function MarsWalkMap() {
             <svg viewBox="0 0 16 16">
               <path d="M8 3.5v9M3.5 8h9" />
             </svg>
+            <span className="icon-btn__label">{t.zoomIn}</span>
           </button>
           <button
             type="button"
@@ -272,6 +274,7 @@ export function MarsWalkMap() {
             <svg viewBox="0 0 16 16">
               <path d="M3.5 8h9" />
             </svg>
+            <span className="icon-btn__label">{t.zoomOut}</span>
           </button>
           <button
             type="button"
@@ -284,6 +287,7 @@ export function MarsWalkMap() {
               <path d="M13.5 8a5.5 5.5 0 1 1-1.7-4" />
               <path d="M13.5 2.5v3h-3" />
             </svg>
+            <span className="icon-btn__label">{t.zoomReset}</span>
           </button>
         </div>
       </header>

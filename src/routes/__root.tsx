@@ -106,8 +106,9 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        {/* Dark mission-control theme by default; honour an explicit light choice before first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('mars-theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}" }} />
+        {/* Dark mission-control theme by default; honour an explicit light choice before first paint.
+            Inside the References floating window (iframe) the shell chrome is hidden via html.embedded. */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('mars-theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}try{if(window.self!==window.top)document.documentElement.classList.add('embedded')}catch(e){document.documentElement.classList.add('embedded')}" }} />
         <HeadContent />
       </head>
       <body>

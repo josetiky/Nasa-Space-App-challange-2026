@@ -1,0 +1,573 @@
+/*
+ * M.I.Y.H. · "¿Listo para aterrizar?" (.rtl) y secuencia de aterrizaje (.ld).
+ * Acotado bajo .mw-ui como el resto de la cubierta.
+ */
+.mw-ui {
+  --f-read: "Atkinson Hyperlegible Next", "MW Inter", system-ui, sans-serif;
+  --f-readmono: "Atkinson Hyperlegible Mono", "MW JetBrains Mono", ui-monospace, monospace;
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ================= ¿Listo para aterrizar? ================= */
+.mw-ui .rtl {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  overflow: hidden;
+  color: var(--ivory);
+  font-family: var(--f-read);
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 32% 8%, #cfd8ff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 76% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 88% 34%, #ffe9cf, transparent),
+    radial-gradient(1.5px 1.5px at 22% 38%, #fff, transparent),
+    #03050a;
+  animation: rtl-in 0.7s var(--ease-strong) both;
+}
+@keyframes rtl-in {
+  from {
+    opacity: 0;
+  }
+}
+.mw-ui .rtl__planet {
+  position: absolute;
+  left: 50%;
+  top: 62vh;
+  width: max(150vw, 1400px);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 8%, rgb(255 190 140 / 0.25), transparent 30%),
+    radial-gradient(circle at 50% 50%, transparent 55%, rgb(3 5 10 / 0.9) 72%),
+    url("/miyh/2k_mars.jpg") center / cover;
+  box-shadow:
+    0 -20px 140px rgb(223 138 93 / 0.38),
+    inset 0 30px 60px rgb(255 200 160 / 0.15);
+  animation: rtl-planet 60s linear infinite;
+}
+@keyframes rtl-planet {
+  to {
+    background-position:
+      0 0,
+      0 0,
+      -1400px 0;
+  }
+}
+.mw-ui .rtl__target {
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  width: 48px;
+  height: 48px;
+  translate: -50% 0;
+  border: 2px solid var(--ivory);
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px rgb(238 229 202 / 0.15);
+}
+.mw-ui .rtl__gale {
+  position: absolute;
+  left: calc(50% + 40px);
+  top: calc(62vh + max(150vw, 1400px) * 0.05 + 8px);
+  font: 600 15px/1 var(--f-readmono);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(3 5 10 / 0.6);
+}
+.mw-ui .rtl__top {
+  position: absolute;
+  inset: calc(28px + var(--safe-t)) var(--gutter) auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mw-ui .rtl__brand {
+  font-family: var(--f-title);
+  letter-spacing: 0.2em;
+  font-size: 15px;
+}
+.mw-ui .rtl__sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: var(--ivory-90);
+}
+.mw-ui .rtl__sound svg,
+.mw-ui .ld__btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mw-ui .rtl__center {
+  position: absolute;
+  inset: 16vh 16px auto;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+}
+.mw-ui .rtl__kicker {
+  font: 600 16px/1 var(--f-readmono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mars);
+}
+.mw-ui .rtl__title {
+  font-family: var(--f-title);
+  font-weight: 400;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 1.12;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-ui .rtl__lead {
+  max-width: 34em;
+  font-size: clamp(17px, 1.4vw, 21px);
+  line-height: 1.5;
+  color: var(--ivory-90);
+}
+.mw-ui .rtl__cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+.mw-ui .rtl__land {
+  height: 72px;
+  padding: 0 46px;
+  border-radius: var(--r-pill);
+  background: var(--ivory);
+  color: #04060b;
+  font-family: var(--f-title);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  animation: rtl-pulse 1.9s var(--ease-strong) infinite;
+  transition: transform 140ms var(--ease-strong);
+}
+.mw-ui .rtl__land:active {
+  transform: scale(0.97);
+}
+@keyframes rtl-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(238 229 202 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 24px rgb(238 229 202 / 0);
+  }
+}
+.mw-ui .rtl__skip {
+  height: 72px;
+  padding: 0 30px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.35);
+  background: rgb(4 6 11 / 0.45);
+  font-size: 18px;
+  transition: transform 140ms var(--ease-strong), background-color 180ms ease;
+}
+.mw-ui .rtl__skip:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .mw-ui .rtl__skip:hover {
+    background: rgb(238 229 202 / 0.1);
+  }
+}
+.mw-ui .rtl__hint {
+  font-size: 15px;
+  color: var(--ivory-70);
+}
+
+/* ================= Secuencia de aterrizaje ================= */
+.mw-ui .ld {
+  --plasma: 0;
+  --dust: 0;
+  --haze: 0;
+  --cabin: 0;
+  --fade: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 56;
+  overflow: hidden;
+  background: #020307;
+  color: var(--ivory);
+  font-family: var(--f-read);
+}
+.mw-ui .ld__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mw-ui .ld.is-nogl .ld__canvas {
+  display: none;
+}
+.mw-ui .ld.is-nogl {
+  background: radial-gradient(ellipse at 50% 120%, #b05a2c, #2a1008 55%, #020307 80%);
+}
+.mw-ui .ld__plasma {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--plasma);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 115%, rgb(255 210 150 / 0.95), rgb(255 110 40 / 0.65) 35%, transparent 70%),
+    radial-gradient(ellipse 120% 80% at 50% 50%, transparent 45%, rgb(255 90 30 / 0.45) 80%);
+  mix-blend-mode: screen;
+  animation: ld-flicker 0.12s steps(2) infinite;
+}
+@keyframes ld-flicker {
+  50% {
+    filter: brightness(1.15);
+  }
+}
+.mw-ui .ld__dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(var(--dust) * 0.85);
+  background:
+    radial-gradient(ellipse 60% 45% at 40% 60%, rgb(214 178 140 / 0.9), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 65% 55%, rgb(190 150 112 / 0.85), transparent 70%),
+    rgb(170 128 92 / 0.35);
+}
+.mw-ui .ld__haze {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--haze);
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 60%, #f0c9a2 0%, #d9a77c 45%, #b9805a 100%);
+}
+.mw-ui .ld__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55));
+  opacity: calc(0.75 + 0.25 * var(--cabin));
+}
+.mw-ui .ld__fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #04060b;
+  opacity: var(--fade);
+}
+
+.mw-ui .ld__top {
+  position: absolute;
+  inset: calc(24px + var(--safe-t)) var(--gutter) auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+.mw-ui .ld__kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 15px/1 var(--f-readmono);
+  letter-spacing: 0.12em;
+}
+.mw-ui .ld__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--crit);
+  box-shadow: 0 0 10px var(--crit);
+  animation: ld-rec 1s steps(2) infinite;
+}
+@keyframes ld-rec {
+  50% {
+    opacity: 0.25;
+  }
+}
+.mw-ui .ld__actions {
+  display: flex;
+  gap: 10px;
+}
+.mw-ui .ld__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 52px;
+  height: 52px;
+  padding: 0 18px;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: rgb(4 6 11 / 0.55);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.3);
+  font-size: 17px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  transition: transform 140ms var(--ease-strong);
+}
+.mw-ui .ld__btn:active {
+  transform: scale(0.97);
+}
+.mw-ui .ld__btn kbd {
+  font: 600 12px/1 var(--f-readmono);
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: rgb(238 229 202 / 0.15);
+}
+
+.mw-ui .ld__readout {
+  position: absolute;
+  left: 50%;
+  top: 16vh;
+  translate: -50% 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  text-shadow: 0 2px 22px rgb(0 0 0 / 0.75);
+  z-index: 2;
+  width: min(92vw, 760px);
+}
+.mw-ui .ld.is-landed .ld__readout {
+  opacity: 0;
+  transition: opacity 0.8s ease 2.4s;
+}
+.mw-ui .ld__label {
+  font: 600 14px/1 var(--f-readmono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ivory-90);
+}
+.mw-ui .ld__alt {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--f-title);
+  font-size: clamp(64px, 9vw, 132px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.mw-ui .ld__alt small {
+  font-size: 0.3em;
+  color: var(--mars);
+}
+.mw-ui .ld__vel {
+  font: 600 clamp(17px, 1.6vw, 22px) / 1.2 var(--f-readmono);
+  font-variant-numeric: tabular-nums;
+}
+.mw-ui .ld__phase {
+  margin-top: 18px;
+  font-family: var(--f-title);
+  font-size: clamp(20px, 2.2vw, 30px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mw-ui .ld__note {
+  font-size: clamp(16px, 1.3vw, 19px);
+  color: var(--ivory-90);
+}
+
+.mw-ui .ld__phases {
+  position: absolute;
+  left: var(--gutter);
+  bottom: calc(40px + var(--safe-b));
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  background: rgb(4 6 11 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(238 229 202 / 0.12);
+  backdrop-filter: blur(8px);
+  font-size: 16px;
+  z-index: 2;
+}
+.mw-ui .ld__phases li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ivory-50);
+}
+.mw-ui .ld__phases li span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.mw-ui .ld__phases li[data-state="done"] {
+  color: var(--ivory-70);
+}
+.mw-ui .ld__phases li[data-state="done"] span {
+  background: currentColor;
+}
+.mw-ui .ld__phases li[data-state="now"] {
+  color: var(--ivory);
+  font-weight: 700;
+}
+.mw-ui .ld__phases li[data-state="now"] span {
+  background: var(--mars);
+  box-shadow: 0 0 0 4px var(--mars-20);
+}
+
+.mw-ui .ld__alti {
+  position: absolute;
+  right: calc(var(--gutter) + var(--safe-r));
+  top: 20vh;
+  bottom: 22vh;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  font: 600 13px/1 var(--f-readmono);
+  color: var(--ivory-70);
+  z-index: 2;
+}
+.mw-ui .ld__alti::before {
+  content: "";
+  position: absolute;
+  right: 66px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgb(238 229 202 / 0.2);
+}
+.mw-ui .ld__alti i {
+  position: absolute;
+  right: 58px;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: var(--mars);
+  box-shadow: 0 0 0 4px var(--mars-20);
+}
+
+.mw-ui .ld__sub {
+  position: absolute;
+  left: 50%;
+  bottom: calc(44px + var(--safe-b));
+  translate: -50% 8px;
+  max-width: min(760px, 90vw);
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: rgb(4 6 11 / 0.78);
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0;
+  transition:
+    opacity 220ms var(--ease-strong),
+    translate 220ms var(--ease-strong);
+  z-index: 3;
+}
+.mw-ui .ld__sub.is-on {
+  opacity: 1;
+  translate: -50% 0;
+}
+.mw-ui .ld__sub b {
+  font: 700 13px/1 var(--f-readmono);
+  letter-spacing: 0.1em;
+  color: var(--sky);
+  margin-right: 8px;
+}
+
+.mw-ui .ld__final {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+  z-index: 3;
+  animation: ld-final 1.6s var(--ease-strong) both;
+}
+@keyframes ld-final {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(0.97);
+  }
+}
+.mw-ui .ld__finalkick {
+  font: 600 15px/1 var(--f-readmono);
+  letter-spacing: 0.16em;
+  color: var(--ok);
+}
+.mw-ui .ld__finaltitle {
+  font-family: var(--f-title);
+  font-weight: 400;
+  font-size: clamp(36px, 6vw, 84px);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 4px 40px rgb(0 0 0 / 0.6);
+}
+.mw-ui .ld__finaltitle em {
+  font-style: normal;
+  color: var(--mars);
+}
+/* ================= Salto al hiperespacio ================= */
+.mw-ui .warp {
+  --warp-bg: 0;
+  --warp-flash: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 57;
+  cursor: pointer;
+  background: rgb(2 3 7 / var(--warp-bg));
+}
+.mw-ui .warp__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mw-ui .warp__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--warp-flash);
+  background: radial-gradient(circle at 50% 50%, #fff6e8 0%, rgb(238 229 202 / 0.8) 30%, #020307 75%);
+}
+.mw-ui .warp__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-ui .warp {
+    background: #020307;
+    animation: rtl-in 0.4s ease both;
+  }
+}
+
+@media (max-width: 760px) {
+  .mw-ui .ld__phases,
+  .mw-ui .ld__alti {
+    display: none;
+  }
+  .mw-ui .ld__readout {
+    top: 13vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-ui .rtl,
+  .mw-ui .rtl__planet,
+  .mw-ui .rtl__land,
+  .mw-ui .ld__plasma,
+  .mw-ui .ld__dot,
+  .mw-ui .ld__final {
+    animation: none;
+  }
+}

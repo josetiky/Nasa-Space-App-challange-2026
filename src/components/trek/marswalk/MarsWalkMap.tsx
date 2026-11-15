@@ -12,13 +12,23 @@ import { TREK_TEXTS } from "../i18n";
 import { localToPlanetocentric } from "../viewHelpers";
 import { DECK_TEXTS } from "./deckText";
 import { MW_TEXTS } from "./i18n";
-import { buildRaster, CANVAS_PX, drawScene, toUV } from "./mapRender";
+import {
+  buildThematic,
+  CANVAS_PX,
+  drawScene,
+  terrainLayers,
+  toUV,
+  useOrthophoto,
+} from "./mapRender";
 import { onRouteComputed } from "./routeBus";
 import { formatLatLon, niceGridStep } from "./model";
 import { ConfChip, ProvChip } from "./ui";
+import { engineText } from "./engineText";
 
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 6;
+const MAX_ZOOM = 8;
+/** Lienzo a 2× para que la ortofoto (2048 px) y las curvas se vean nítidas en pantallas densas. */
+const PIXEL_RATIO = 2;
 
 interface View {
   readonly zoom: number;
@@ -125,23 +135,33 @@ export function MarsWalkMap() {
     return () => ro.disconnect();
   }, []);
 
-  const raster = useMemo(
-    () => buildRaster(session, activeLayer, visibleOverlays.zones),
+  // La ortofoto solo se pinta cuando la sesión ya está construida sobre la tesela de ese sitio
+  const ortho = useOrthophoto(state.loadedSiteId === siteInfo.id ? siteInfo.orthophotoUrl : null);
+  const terrainL = useMemo(
+    () => terrainLayers(session),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [snapshot.terrain],
+  );
+  const thematic = useMemo(
+    () => buildThematic(session, activeLayer, visibleOverlays.zones),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [snapshot, activeLayer, visibleOverlays.zones, session.envelope.maxSlopeDeg],
   );
+  const base = useMemo(() => ({ ortho, terrain: terrainL, thematic }), [ortho, terrainL, thematic]);
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
-    drawScene(ctx, raster, session, {
+    drawScene(ctx, base, session, {
       ...view,
       overlays: visibleOverlays,
       pois: siteInfo.pois,
       inspected: inspectedPoint,
       labels: true,
+      contours: true,
+      pixelRatio: PIXEL_RATIO,
     });
-  }, [raster, session, view, visibleOverlays, siteInfo.pois, inspectedPoint]);
+  }, [base, session, view, visibleOverlays, siteInfo.pois, inspectedPoint]);
 
   const { x0, z0, nx, nz, cell } = snapshot.grid;
   const extentX = (nx - 1) * cell;
@@ -249,6 +269,7 @@ export function MarsWalkMap() {
               onClick={() => dispatchTrek({ type: "setPickMode", mode: m })}
             >
               <svg viewBox="0 0 16 16">{PICK_ICONS[m]}</svg>
+              <span className="icon-btn__label">{t.pick[m]}</span>
             </button>
           ))}
           <button
@@ -261,6 +282,7 @@ export function MarsWalkMap() {
             <svg viewBox="0 0 16 16">
               <path d="M8 3.5v9M3.5 8h9" />
             </svg>
+            <span className="icon-btn__label">{t.zoomIn}</span>
           </button>
           <button
             type="button"
@@ -272,6 +294,7 @@ export function MarsWalkMap() {
             <svg viewBox="0 0 16 16">
               <path d="M3.5 8h9" />
             </svg>
+            <span className="icon-btn__label">{t.zoomOut}</span>
           </button>
           <button
             type="button"
@@ -284,6 +307,7 @@ export function MarsWalkMap() {
               <path d="M13.5 8a5.5 5.5 0 1 1-1.7-4" />
               <path d="M13.5 2.5v3h-3" />
             </svg>
+            <span className="icon-btn__label">{t.zoomReset}</span>
           </button>
         </div>
       </header>
@@ -292,8 +316,8 @@ export function MarsWalkMap() {
         <canvas
           ref={canvasRef}
           className="mw__canvas"
-          width={CANVAS_PX}
-          height={CANVAS_PX}
+          width={CANVAS_PX * PIXEL_RATIO}
+          height={CANVAS_PX * PIXEL_RATIO}
           role="img"
           aria-label={`${siteInfo.name} · ${layerName}`}
           data-pick={pickMode}
@@ -362,6 +386,16 @@ export function MarsWalkMap() {
           <ProvChip type={layerProvenance(activeLayer, state)} />
         </div>
 
+        <div className="mw__hud mw__hud--legend">
+          <MapLegend
+            layer={activeLayer}
+            lang={state.lang}
+            hasOrtho={ortho !== null}
+            contourM={terrainL?.contours.intervalM ?? null}
+            maxSlope={session.envelope.maxSlopeDeg}
+          />
+        </div>
+
         <div className="mw__hud mw__hud--probe t-label">
           {t.local} X <b>{cursor.x}</b> · Z <b>{cursor.z}</b> m · {t.elev}{" "}
           <b>{Number.isNaN(elev) ? "NaN" : `${elev.toFixed(1)} m`}</b> · {t.slope}{" "}
@@ -387,7 +421,7 @@ export function MarsWalkMap() {
                   ? siteInfo.source
                   : rr.ok
                     ? ""
-                    : rr.message}
+                    : engineText(rr.message, state.lang)}
             </p>
             {!loadingTile && !loadError && !rr.ok && rr.suggestions.length > 0 ? (
               <div className="mw__tools" style={{ justifyContent: "center" }}>
@@ -396,6 +430,7 @@ export function MarsWalkMap() {
                     key={i}
                     type="button"
                     className="btn btn--ghost btn--sm"
+                    title={`${t.useSuggestion} (${Number(s.x.toFixed(1))}, ${Number(s.z.toFixed(1))})`}
                     onClick={() =>
                       dispatchTrek({
                         type: "simEvent",
@@ -403,7 +438,7 @@ export function MarsWalkMap() {
                       })
                     }
                   >
-                    {t.useSuggestion} ({Number(s.x.toFixed(1))}, {Number(s.z.toFixed(1))})
+                    {t.pick.goal} ({Number(s.x.toFixed(1))}, {Number(s.z.toFixed(1))})
                   </button>
                 ))}
               </div>
@@ -427,5 +462,79 @@ export function MarsWalkMap() {
         </p>
       </div>
     </>
+  );
+}
+
+/** Leyenda compacta de la capa activa (base + curvas). */
+function MapLegend({
+  layer,
+  lang,
+  hasOrtho,
+  contourM,
+  maxSlope,
+}: {
+  layer: string;
+  lang: "es" | "en";
+  hasOrtho: boolean;
+  contourM: number | null;
+  maxSlope: number;
+}) {
+  const es = lang === "es";
+  const sw = (c: string, label: string) => (
+    <span key={label} className="mw-legend__item">
+      <i style={{ background: c }} />
+      {label}
+    </span>
+  );
+  const items =
+    layer === "slope"
+      ? [sw("#7fc878", "< 15°"), sw("#ff9a3c", `15–${maxSlope}°`), sw("#ff4632", `> ${maxSlope}°`)]
+      : layer === "zones"
+        ? [
+            sw("#10b981", "Z0"),
+            sw("#f0be6e", "Z1"),
+            sw("#f0963c", "Z2"),
+            sw("#18181f", "Z3"),
+            sw("#8fb3f0", "Z4"),
+            sw("#ff4834", "Z5"),
+          ]
+        : layer === "confidence"
+          ? [
+              sw("#8fd6b0", "K1"),
+              sw("#8fb3f0", "K2"),
+              sw("#aaa0dc", "K3"),
+              sw("#df8a5d", "K4"),
+              sw("#783028", "K5"),
+            ]
+          : layer === "dust"
+            ? [sw("rgba(210,170,110,0.25)", "τ 0.5"), sw("rgba(210,170,110,0.85)", "τ ≥ 2.8")]
+            : layer === "radiation"
+              ? [sw("rgba(190,90,255,0.2)", "0.6"), sw("rgba(190,90,255,0.85)", "≥ 2.7 mSv/sol")]
+              : [];
+  return (
+    <p
+      className="mw-legend t-label"
+      title={
+        hasOrtho
+          ? es
+            ? "Ortofoto REAL: imágenes de Curiosity proyectadas en vista cenital sobre su malla estéreo (NASA/JPL-Caltech vía Access Mars). Lo que el rover no vio llega en gris y se tiñe de ocre solo para continuidad visual."
+            : "REAL orthophoto: Curiosity imagery projected top-down over its stereo mesh (NASA/JPL-Caltech via Access Mars). Areas the rover never saw arrive grey and are tinted ochre for visual continuity only."
+          : es
+            ? "Relieve sombreado de la elevación del motor"
+            : "Shaded relief from the engine elevation"
+      }
+    >
+      <span className="mw-legend__base">
+        {hasOrtho
+          ? es
+            ? "Ortofoto Curiosity"
+            : "Curiosity orthophoto"
+          : es
+            ? "Relieve"
+            : "Relief"}
+        {contourM !== null ? ` · ${es ? "curvas" : "contours"} ${contourM} m` : ""}
+      </span>
+      {items}
+    </p>
   );
 }

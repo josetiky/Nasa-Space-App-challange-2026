@@ -253,6 +253,7 @@ export function composeTeamDirective(
   let speedImposedBy = directives[0]!.subject.id;
   let strictestConf: ConfidenceClass = directives[0]!.limits.minConfidence;
   let maxStrain = directives[0]!.strainFactor;
+  let minCapacity = 1;
   let goalPolicy: GoalPolicy = directives[0]!.goalPolicy;
 
   const GOAL_ORDER: Record<GoalPolicy, number> = {
@@ -285,6 +286,7 @@ export function composeTeamDirective(
     if (d.strainFactor > maxStrain) {
       maxStrain = d.strainFactor;
     }
+    minCapacity = Math.min(minCapacity, d.capacityFactor ?? 1);
     if (GOAL_ORDER[d.goalPolicy] > GOAL_ORDER[goalPolicy]) {
       goalPolicy = d.goalPolicy;
     }
@@ -327,6 +329,7 @@ export function composeTeamDirective(
     },
     weightMultipliers: mults,
     strainFactor: maxStrain,
+    ...(minCapacity < 1 ? { capacityFactor: minCapacity } : {}),
     fallbackLadder: mostSevereDirective.fallbackLadder,
     ...(mostSevereDirective.protocol !== undefined
       ? { protocol: mostSevereDirective.protocol }

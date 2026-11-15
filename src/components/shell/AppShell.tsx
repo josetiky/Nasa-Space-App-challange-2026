@@ -151,14 +151,18 @@ function SimChip() {
   );
 }
 
+/** Rutas que son la experiencia principal (cubierta M.I.Y.H.): se muestran sin barra lateral ni encabezado. */
+const DECK_ROUTES = ["/", "/martian-map"];
+
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const fullBleed = FULL_BLEED.includes(location.pathname);
+  if (DECK_ROUTES.includes(location.pathname)) return <>{children}</>;
   return (
-    <div className="relative min-h-screen bg-ink text-bright lg:pl-60">
+    <div className="app-shell relative min-h-screen bg-ink text-bright lg:pl-60">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(90%_60%_at_80%_-10%,color-mix(in_srgb,var(--rose)_9%,transparent)_0%,transparent_55%)]" />
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-panel/85 backdrop-blur-xl lg:flex">
+      <aside className="app-aside fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-panel/85 backdrop-blur-xl lg:flex">
         <div className="border-b border-line/70 px-3 py-4">
           <Brand />
         </div>
@@ -171,7 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-20 border-b border-line bg-ink/85 backdrop-blur-xl">
+      <header className="app-header sticky top-0 z-20 border-b border-line bg-ink/85 backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 py-2">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -206,7 +210,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main className={cn("relative z-10", fullBleed ? "" : "mx-auto max-w-[1400px] px-4 py-6 sm:px-6")}>{children}</main>
 
-      <footer className="relative z-10 border-t border-line bg-ink/60">
+      <footer className="app-footer relative z-10 border-t border-line bg-ink/60">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-1 px-6 py-4 font-mono text-[10px] leading-relaxed text-fog sm:flex-row sm:justify-between">
           <p>M.I.Y.H. — MARS IN YOUR HANDS · Space Rockstars · NASA Space Apps Challenge 2026</p>
           <p>

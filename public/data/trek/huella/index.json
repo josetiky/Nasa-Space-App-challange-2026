@@ -1,0 +1,67 @@
+{
+  "strideS": 5,
+  "subjectId": "EVA1",
+  "dataType": "SIMULATED",
+  "scenarios": [
+    {
+      "id": "nominal",
+      "titleEs": "Caminata nominal",
+      "titleEn": "Nominal walk",
+      "file": "/data/trek/huella/nominal.json",
+      "durationS": 11607,
+      "firstEventS": null,
+      "events": 0,
+      "sourceSha256": "8d39164c426be4512608c1087a17d24fbae30e9a650dcbf0287008181bb5b07a"
+    },
+    {
+      "id": "estres_termico",
+      "titleEs": "Estrés térmico (falla LCVG)",
+      "titleEn": "Heat stress (LCVG failure)",
+      "file": "/data/trek/huella/estres_termico.json",
+      "durationS": 11247,
+      "firstEventS": 7294,
+      "events": 7,
+      "sourceSha256": "a654e94b822db8afbe00edcd0ed92453d84e781b87207f113368563dc449c485"
+    },
+    {
+      "id": "falla_ventilador",
+      "titleEs": "Falla de ventilador → CO₂",
+      "titleEn": "Fan failure → CO₂",
+      "file": "/data/trek/huella/falla_ventilador.json",
+      "durationS": 10527,
+      "firstEventS": 6853,
+      "events": 10,
+      "sourceSha256": "e5cbdd423793fb15e2ed73ff306d2a82718b731e9c47adb5d8de173e8a59f927"
+    },
+    {
+      "id": "fuga_traje",
+      "titleEs": "Fuga de presión del traje",
+      "titleEn": "Suit pressure leak",
+      "file": "/data/trek/huella/fuga_traje.json",
+      "durationS": 10347,
+      "firstEventS": 6913,
+      "events": 5,
+      "sourceSha256": "0f232278ffa28567107c2d26d4858f11c0258083be6de3accc454fb04de73822"
+    },
+    {
+      "id": "arritmia",
+      "titleEs": "Arritmia sostenida",
+      "titleEn": "Sustained arrhythmia",
+      "file": "/data/trek/huella/arritmia.json",
+      "durationS": 10407,
+      "firstEventS": 6848,
+      "events": 4,
+      "sourceSha256": "203d32077a4599895948161dda06b04f1962eec23a8fc89a032003344de57cf3"
+    },
+    {
+      "id": "perdida_comunicacion",
+      "titleEs": "Pérdida de comunicación",
+      "titleEn": "Loss of comms",
+      "file": "/data/trek/huella/perdida_comunicacion.json",
+      "durationS": 10647,
+      "firstEventS": 7148,
+      "events": 2,
+      "sourceSha256": "86f3a744fdccebd34bdec9f7359a47e2f05ab277322539399dcc47b9147de1f5"
+    }
+  ]
+}

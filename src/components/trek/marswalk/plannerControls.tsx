@@ -9,9 +9,11 @@ import { resolveBaseWeights } from "@/core/trek/cost/weights";
 import { TREK_PARAMS } from "@/core/trek/params";
 import { dispatchTrek, useTrek } from "@/state/trekStore";
 import { TREK_TEXTS } from "../i18n";
+import { PhysioWeightsPanel } from "./PhysioPanel";
 import { computeOptimalRoute, onRouteComputed } from "./routeBus";
 import { RouteResultCard } from "./RouteResultCard";
 import { ConfChip } from "./ui";
+import { engineText } from "./engineText";
 
 const TERMS: readonly CostTermId[] = ["D", "T", "R", "E", "U", "H"];
 const KEY: Readonly<Record<CostTermId, keyof WeightVector>> = {
@@ -381,15 +383,9 @@ export function WeightTuner() {
             ? "la seguridad manda: el A* usa el perfil de emergencia y tu preferencia queda en pausa hasta que la salud baje."
             : "safety rules: A* uses the emergency profile and your preference is paused until health recovers."}
         </div>
-      ) : Object.keys(session.directive.weightMultipliers).length > 0 ? (
-        <div className="mw-block mw-block--warn">
-          {es ? "La directiva de salud" : "The health directive"} ({session.fsm.state}){" "}
-          {es ? "refuerza" : "reinforces"}{" "}
-          {Object.entries(session.directive.weightMultipliers)
-            .map(([key, v]) => `${key.toUpperCase()}×${Number(v).toFixed(2)}`)
-            .join(" · ")}
-        </div>
       ) : null}
+
+      <PhysioWeightsPanel />
 
       <p className="mw__muted">
         {rr.ok
@@ -398,7 +394,7 @@ export function WeightTuner() {
             : `Route recomputed: ${rr.route.distanceM.toFixed(0)} m · max ${rr.route.maxSlopeDeg.toFixed(1)}° · ${rr.route.durationMin.toFixed(1)} min · ${rr.explanation.totals.equivalentCostM.toFixed(0)} m-eq.`
           : es
             ? `Sin ruta admisible: ${rr.message}`
-            : `No admissible route: ${rr.message}`}{" "}
+            : `No admissible route: ${engineText(rr.message, "en")}`}{" "}
         {es
           ? "Los pesos solo cambian qué ruta prefiere el A* entre las seguras: la envolvente (pendiente, zonas, confianza) no se relaja."
           : "Weights only change which safe route A* prefers: the envelope (slope, zones, confidence) is never relaxed."}

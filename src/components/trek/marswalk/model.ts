@@ -196,6 +196,14 @@ function scale(v: number | null, k: number): number | null {
   return v === null ? null : v * k;
 }
 
+/** Minutos como "45 min" o "2 h 36 min" (duración de EVA y de paradas). */
+export function formatHm(min: number): string {
+  if (!Number.isFinite(min)) return "—";
+  const m = Math.max(0, Math.round(min));
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`;
+}
+
 /** Formato T+ hh:mm:ss del reloj de misión. */
 export function missionClock(s: number): string {
   const t = Math.max(0, Math.round(s));

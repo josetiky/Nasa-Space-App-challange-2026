@@ -35,6 +35,10 @@ export interface EdgeCostInput {
   readonly speedFactor?: number;
   /** Factor φ de exigencia fisiológica de la directiva de salud (>= 1). */
   readonly strainFactor?: number;
+  /** Capacidad metabólica sostenible disponible (0.3–1]: con necesidades fisiológicas, M_sost baja. */
+  readonly capacityFactor?: number;
+  /** Pendiente cómoda (°): por encima, penalización blanda k·((|θ|−θc)/θ_ref)² en T. */
+  readonly comfortSlopeDeg?: number;
   /** Carga útil transportada (kg). */
   readonly payloadKg?: number;
   /** Modelo de locomoción activo (por defecto pandolf-mars). */
@@ -65,6 +69,8 @@ const FLAT_REF_WATTS = TREK_PARAMS.flatMetabolicRefKjH.value / 3.6;
 const FLAT_REF_SPEED_MS = TREK_PARAMS.flatSpeedPandolfKmh.value / 3.6;
 const FLAT_REF_O2_PER_M = consumptionRates(FLAT_REF_WATTS).o2PsiPerMin / (FLAT_REF_SPEED_MS * 60);
 const SUSTAINABLE_W = TREK_PARAMS.sustainableMetabolicW.value;
+/** [diseño] Peso de la bisagra de pendiente cómoda (physio.ts). */
+const COMFORT_HINGE_COEFF = 6;
 
 /** Calcula las intensidades adimensionales no negativas (t, r, ε, u, h) de una arista (INV-R2). */
 export function computeEdgeIntensities(input: EdgeCostInput): EdgeIntensities {
@@ -78,8 +84,15 @@ export function computeEdgeIntensities(input: EdgeCostInput): EdgeIntensities {
   );
 
   // Topografía t(e) = (θ/θ_ref)² + k_rug·ρ(e) + k_blando·σ(e)
+  // + bisagra fisiológica k_c·((θ − θ_cómoda)/θ_ref)² cuando la directiva trae pendiente cómoda (physio.ts)
+  const comfort = input.comfortSlopeDeg;
+  const hinge =
+    comfort !== undefined && Number.isFinite(comfort) && absSlope > comfort
+      ? COMFORT_HINGE_COEFF * ((absSlope - comfort) / cautionDeg) ** 2
+      : 0;
   const t =
     (absSlope / cautionDeg) ** 2 +
+    hinge +
     TREK_PARAMS.roughnessCostCoeff.value * rough +
     TREK_PARAMS.softSoilCostCoeff.value * soft;
 
@@ -131,9 +144,10 @@ export function computeEdgeIntensities(input: EdgeCostInput): EdgeIntensities {
   );
   const u = 1 - cScore;
 
-  // Exigencia fisiológica h(e) = φ(estado) · max(0, M(e)/M_sost - 1)
+  // Exigencia fisiológica h(e) = φ(estado) · max(0, M(e)/(c·M_sost) - 1), c = capacidad disponible
   const phi = Math.max(1, input.strainFactor ?? 1);
-  const h = input.uncrewed ? 0 : phi * Math.max(0, metabolicW / SUSTAINABLE_W - 1);
+  const capacity = Math.max(0.3, Math.min(1, input.capacityFactor ?? 1));
+  const h = input.uncrewed ? 0 : phi * Math.max(0, metabolicW / (SUSTAINABLE_W * capacity) - 1);
 
   const kappa = Math.max(1, zoneMultiplier(input.zone));
 

@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import type { CostTermId } from "@/core/trek/contracts";
 import { useTrek } from "@/state/trekStore";
 import { TREK_TEXTS } from "../i18n";
+import { engineText } from "./engineText";
 
 const TERMS: ReadonlyArray<[CostTermId, "d" | "t" | "r" | "e" | "u" | "h"]> = [
   ["D", "d"],
@@ -58,7 +59,8 @@ export function RouteResultCard({ onClose }: { onClose: () => void }) {
           </button>
         </header>
         <p className="mw-result__verdict is-crit">
-          {es ? "Sin ruta admisible" : "No admissible route"} · {rr.reason}. {rr.message}
+          {es ? "Sin ruta admisible" : "No admissible route"} · {rr.reason}.{" "}
+          {engineText(rr.message, state.lang)}
         </p>
       </div>
     );

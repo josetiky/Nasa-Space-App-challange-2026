@@ -27,6 +27,9 @@ import { MW_TEXTS } from "./i18n";
 import { IsoMap } from "./IsoMap";
 import { MarsWalkMap } from "./MarsWalkMap";
 import { KnownPoints, WeightTuner } from "./plannerControls";
+import { HuellaSourcePicker, PhysioWeightsPanel } from "./PhysioPanel";
+import { CrewParamsPanel, FsmDiagram, RadiationPanel, SoloConsole } from "./SoloConsole";
+import { MarsEnvChip } from "./MarsEnvPanel";
 import { computeOptimalRoute, onRouteComputed } from "./routeBus";
 import {
   buildAssistantFeed,
@@ -36,12 +39,14 @@ import {
   vitalsFromRow,
 } from "./model";
 import { ConfChip, ProvChip, UnavailableChip } from "./ui";
+import { engineText } from "./engineText";
 
 const fmt1 = (n: number) => (Number.isFinite(n) ? n.toFixed(1) : "—");
 const fmt0 = (n: number) => (Number.isFinite(n) ? n.toFixed(0) : "—");
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export const SPEEDS = [5, 15, 60] as const;
+/** Segundos de misión por segundo real (×1 = tiempo real). */
+export const SPEEDS = [1, 5, 15, 60, 300] as const;
 export type Speed = (typeof SPEEDS)[number];
 
 const INCIDENTS = [
@@ -111,7 +116,12 @@ export function PlannerTab({ onSend, onOpenWhy }: { onSend: () => void; onOpenWh
   const st = session.fsm.state;
   const locked = isHumanLockActive(state);
   const r = session.activeRoute;
-  const [view, setView] = useState<"chain" | "points" | "weights">("chain");
+  const [view, setView] = useState<"chain" | "points" | "weights" | "astro">("chain");
+  const solo = session.missionProfile === "solo" && session.live !== null;
+  // Al salir de la misión individual la vista "Astronauta" deja de existir
+  useEffect(() => {
+    if (!solo) setView((v) => (v === "astro" ? "chain" : v));
+  }, [solo]);
   // El botón del pie también lleva a la vista "Puntos", donde aparece la tarjeta de resultado
   useEffect(() => onRouteComputed(() => setView("points")), []);
 
@@ -223,22 +233,33 @@ export function PlannerTab({ onSend, onOpenWhy }: { onSend: () => void; onOpenWh
           </label>
         </div>
         <div className="mw-seg" role="tablist" aria-label={d.plannerViews} data-in>
-          {(["chain", "points", "weights"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={view === v}
-              onClick={() => setView(v)}
-            >
-              {d.plannerView[v]}
-            </button>
-          ))}
+          {(["chain", "points", "weights", ...(solo ? (["astro"] as const) : [])] as const).map(
+            (v) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={view === v}
+                onClick={() => setView(v)}
+              >
+                {v === "astro"
+                  ? state.lang === "es"
+                    ? "Astronauta"
+                    : "Astronaut"
+                  : d.plannerView[v]}
+              </button>
+            ),
+          )}
         </div>
         {view === "chain" ? (
           <Roadmap rows={chain} />
         ) : view === "points" ? (
           <KnownPoints />
+        ) : view === "astro" ? (
+          <div className="solo-planner">
+            <CrewParamsPanel />
+            <RadiationPanel />
+          </div>
         ) : (
           <WeightTuner />
         )}
@@ -408,11 +429,11 @@ export function WhyTab() {
             <b>
               {t.noRoute} · {!rr.ok ? rr.reason : ""}
             </b>
-            <div>{!rr.ok ? rr.message : ""}</div>
+            <div>{!rr.ok ? engineText(rr.message, state.lang) : ""}</div>
             {!rr.ok
               ? rr.blocked.slice(0, 4).map((b, i) => (
                   <div key={i}>
-                    [{b.kind.toUpperCase()}] {b.detail}
+                    [{b.kind.toUpperCase()}] {engineText(b.detail, state.lang)}
                   </div>
                 ))
               : null}
@@ -449,7 +470,7 @@ export function WhyTab() {
               <div className="mw__stack">
                 {rr.explanation.blockedDirectPath.map((b, i) => (
                   <div key={i} className="mw-block mw-block--warn">
-                    <b>[{b.kind.toUpperCase()}]</b> {b.detail}
+                    <b>[{b.kind.toUpperCase()}]</b> {engineText(b.detail, state.lang)}
                     {b.value !== undefined ? ` · ${b.value}` : ""}
                     {b.limit !== undefined ? ` / ${b.limit}` : ""} · ({b.at.x}, {b.at.z})
                   </div>
@@ -467,14 +488,16 @@ export function WhyTab() {
                 {rr.explanation.alternatives.map((a) => (
                   <li
                     key={a.id}
-                    title={a.discardReasons.map((x) => `[${x.kind}] ${x.detail}`).join("\n")}
+                    title={a.discardReasons
+                      .map((x) => `[${x.kind}] ${engineText(x.detail, state.lang)}`)
+                      .join("\n")}
                   >
                     <span>
-                      {a.label}
+                      {engineText(a.label, state.lang)}
                       <small className="mw__muted">
-                        {a.summary}
+                        {engineText(a.summary, state.lang)}
                         {a.discardReasons[0]
-                          ? ` · [${a.discardReasons[0].kind}] ${a.discardReasons[0].detail}`
+                          ? ` · [${a.discardReasons[0].kind}] ${engineText(a.discardReasons[0].detail, state.lang)}`
                           : ""}
                       </small>
                     </span>
@@ -645,8 +668,12 @@ export function SimTab({
   onSpeed,
   hrHistory,
   onOpenHealth,
+  onOpenConfirm,
+  onOpenEnv,
 }: {
   onOpenHealth: () => void;
+  onOpenConfirm?: () => void;
+  onOpenEnv?: () => void;
   playing: boolean;
   onTogglePlay: () => void;
   speed: Speed;
@@ -665,9 +692,11 @@ export function SimTab({
   const elapsedMin = session.resources.evaElapsedMin;
   const progress = routeMin > 0 ? Math.max(0, Math.min(1, elapsedMin / routeMin)) : 0;
   const marginPct = rr.ok ? Math.max(0, Math.min(100, rr.resourcePlan.returnMarginPct)) : 0;
+  // Misión individual: astronauta en vivo con máquina de estados visible y fallas en el camino
+  const solo = session.missionProfile === "solo" && session.live !== null;
 
   return (
-    <div className="sim">
+    <div className={`sim${solo ? " sim--solo" : ""}`}>
       <header className="sim__head">
         <Eyebrow n={3}>{d.simEyebrow}</Eyebrow>
         <TwoLineTitle lines={d.simTitle} className="sim__title" />
@@ -701,6 +730,7 @@ export function SimTab({
             <p className="t-label">
               {siteInfo.dataType} · {siteInfo.resolutionM} m/nodo
             </p>
+            {solo ? null : <PhysioWeightsPanel compact />}
           </div>
           <div className="sim__overlay sim__overlay--tr panel--inset">
             <p className="t-label">
@@ -712,6 +742,7 @@ export function SimTab({
             <p className="t-label">
               {t.slopeLimit} {envelope.maxSlopeDeg}° · {fsm.state}
             </p>
+            {onOpenEnv ? <MarsEnvChip onOpen={onOpenEnv} /> : null}
           </div>
 
           <IsoMap />
@@ -755,8 +786,13 @@ export function SimTab({
                     type="button"
                     aria-pressed={speed === s}
                     onClick={() => onSpeed(s)}
+                    title={
+                      state.lang === "es"
+                        ? `${s} s de misión por cada segundo real${s === 1 ? " (tiempo real)" : ""}`
+                        : `${s} mission s per real second${s === 1 ? " (real time)" : ""}`
+                    }
                   >
-                    +{s}s
+                    ×{s}
                   </button>
                 ))}
               </div>
@@ -780,8 +816,9 @@ export function SimTab({
           <section className="sim__vitals glass panel" aria-label={t.healthTitle} data-in>
             <header className="sim__phead">
               <p className="t-label">
-                {d.astronaut} · <b>EVA1</b> · HUELLA
+                {d.astronaut} · <b>EVA1</b>
               </p>
+              <HuellaSourcePicker />
               <p className="t-label t-mono">{missionClock(clockS)}</p>
             </header>
             <div className="vit vit--wide panel--inset" data-quality={hr.quality}>
@@ -818,8 +855,9 @@ export function SimTab({
             )}
           </section>
 
-          <AssistantPanel />
+          {solo ? <FsmDiagram {...(onOpenConfirm ? { onOpenConfirm } : {})} /> : <AssistantPanel />}
         </div>
+        {solo ? <SoloConsole assistant={<AssistantPanel />} /> : null}
       </div>
     </div>
   );
@@ -857,8 +895,12 @@ function AssistantPanel() {
   const t = MW_TEXTS[state.lang];
   const d = DECK_TEXTS[state.lang];
   const feed = useMemo(
-    () => buildAssistantFeed(state.session.replanLog, state.session.fsm.history),
-    [state.session.replanLog, state.session.fsm.history],
+    () =>
+      buildAssistantFeed(state.session.replanLog, state.session.fsm.history).map((f) => ({
+        ...f,
+        text: engineText(f.text, state.lang),
+      })),
+    [state.session.replanLog, state.session.fsm.history, state.lang],
   );
   const [voiceOn, setVoiceOn] = useState(false);
   const spokenRef = useRef<string | null>(null);
@@ -1028,7 +1070,7 @@ export function HealthTab({
                 key={`${tr.ruleId}-${i}`}
                 className={`mw-block ${tr.level === "ABORTAR" || tr.level === "SUPERVIVENCIA" ? "mw-block--crit" : "mw-block--warn"}`}
               >
-                <b>{tr.ruleId}</b> ({tr.level}) · {tr.message}
+                <b>{tr.ruleId}</b> ({tr.level}) · {engineText(tr.message, state.lang)}
               </div>
             ))}
           </div>
@@ -1224,7 +1266,7 @@ export function HumanConfirmModal({ onClose }: { onClose: () => void }) {
           <div className="mw__stack">
             {fsm.activeTriggers.map((tr, i) => (
               <div key={i} className="mw-block mw-block--crit">
-                <b>{tr.ruleId}</b> ({tr.level}) · {tr.message}
+                <b>{tr.ruleId}</b> ({tr.level}) · {engineText(tr.message, state.lang)}
               </div>
             ))}
           </div>

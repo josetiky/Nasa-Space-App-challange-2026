@@ -148,6 +148,16 @@ export interface NavigationDirective {
   readonly limits: NavigationLimits;
   readonly weightMultipliers: Partial<Record<"t" | "r" | "e" | "u" | "h", number>>;
   readonly strainFactor: number;
+  /**
+   * Fracción (0.3–1] de la capacidad metabólica sostenible que el astronauta conserva según sus
+   * necesidades fisiológicas (health/physio.ts). Omitida = 1 (nominal). Solo afecta al término H.
+   */
+  readonly capacityFactor?: number;
+  /**
+   * Pendiente "cómoda" (grados) por necesidades fisiológicas: por encima se suma una penalización
+   * cuadrática BLANDA al término T. Omitida = sin penalización extra. Nunca sustituye al límite duro.
+   */
+  readonly comfortSlopeDeg?: number;
   readonly fallbackLadder: ReadonlyArray<{ limits: NavigationLimits; goalPolicy: GoalPolicy }>;
   readonly protocol?: EmergencyProtocolId;
   readonly rationale: ReadonlyArray<{ ruleId: string; message: string }>;
@@ -176,6 +186,10 @@ export interface SafetyEnvelope {
   readonly minConfidence: ConfidenceClass;
   readonly speedFactor: number;
   readonly strainFactor: number;
+  /** Capacidad metabólica sostenible disponible (0.3–1], de la directiva. */
+  readonly capacityFactor: number;
+  /** Pendiente cómoda blanda de la directiva (Infinity = sin penalización extra). */
+  readonly comfortSlopeDeg: number;
   readonly weightMultipliers: Partial<Record<"t" | "r" | "e" | "u" | "h", number>>;
   readonly goalPolicy: GoalPolicy;
   readonly shelters: readonly ShelterPoint[];
@@ -368,6 +382,54 @@ export interface RouteRequest {
   readonly customWeights?: WeightVector;
   readonly vehicle: VehicleProfileId;
   readonly waypoints?: readonly LocalPoint[];
+  /**
+   * Paradas científicas en orden (origen → paradas → destino). Solo se usan con la política
+   * "keep-goal": en CRITICAL/EMERGENCY la directiva manda al refugio y las paradas se ignoran.
+   */
+  readonly stops?: readonly TourStop[];
+}
+
+/** Parada científica del recorrido: punto de observación seguro y tiempo de trabajo en él. */
+export interface TourStop {
+  readonly id: string;
+  readonly name: string;
+  readonly point: LocalPoint;
+  /** Minutos de trabajo científico en la parada (el astronauta no camina). */
+  readonly dwellMin: number;
+  /** Tarea en la parada (texto libre para la interfaz). */
+  readonly task?: string;
+}
+
+/** Un tramo del recorrido: de la parada anterior (o el origen) a la siguiente parada (o al destino). */
+export interface TourLeg {
+  /** Parada a la que llega el tramo; null = destino final. */
+  readonly toStopId: string | null;
+  readonly toName: string;
+  readonly point: LocalPoint;
+  readonly distanceM: number;
+  readonly walkMin: number;
+  readonly dwellMin: number;
+  /** Minuto del recorrido (desde la salida) en que se llega y en que se sale de la parada. */
+  readonly arriveMin: number;
+  readonly departMin: number;
+  /** Minutos del consumible limitante que quedan al salir de la parada (o al llegar al destino). */
+  readonly remainingAtDepartMin: number;
+}
+
+export interface TourSkip {
+  readonly stopId: string;
+  readonly name: string;
+  readonly reason: NoRouteReason;
+  readonly message: string;
+}
+
+/** Plan de un recorrido con paradas: tramos, paradas omitidas y totales con el tiempo de ciencia. */
+export interface TourPlan {
+  readonly legs: readonly TourLeg[];
+  readonly skipped: readonly TourSkip[];
+  readonly walkMin: number;
+  readonly dwellMin: number;
+  readonly totalMin: number;
 }
 
 export type RouteResult =
@@ -381,6 +443,8 @@ export type RouteResult =
       readonly epsilon: number;
       readonly ladderStep: number;
       readonly computeMs: number;
+      /** Presente cuando la ruta pasa por paradas científicas. */
+      readonly tour?: TourPlan;
     }
   | {
       readonly ok: false;
@@ -466,6 +530,11 @@ export type SimEvent =
       readonly simulated: boolean;
     }
   | { readonly kind: "set-goal"; readonly goal: LocalPoint; readonly simulated: boolean }
+  | {
+      readonly kind: "set-stops";
+      readonly stops: readonly TourStop[];
+      readonly simulated: boolean;
+    }
   | { readonly kind: "set-origin"; readonly origin: LocalPoint; readonly simulated: boolean }
   | {
       readonly kind: "set-weight-profile";

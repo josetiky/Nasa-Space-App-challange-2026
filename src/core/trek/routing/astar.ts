@@ -386,6 +386,8 @@ export function searchPath(
             zone: snapshot.zone[n]!,
             speedFactor: envelope.speedFactor,
             strainFactor: envelope.strainFactor,
+            capacityFactor: envelope.capacityFactor,
+            comfortSlopeDeg: envelope.comfortSlopeDeg,
           },
           weights,
         );

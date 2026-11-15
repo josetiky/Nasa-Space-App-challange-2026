@@ -245,6 +245,11 @@ export function stepFsm(prev: FsmState, input: FsmStepInput): FsmState {
   if (nextState === "NORMAL") {
     causeSet.clear();
   }
+  // Mientras un enclavamiento retiene CRITICAL/EMERGENCY sin disparadores nuevos, se conserva la
+  // causa que lo provocó: el protocolo (p. ej. refugio SEP) no debe cambiar al apagarse el disparador.
+  if (causeSet.size === 0 && nextState === prev.state && nextLatch !== "none") {
+    for (const c of prev.causes) causeSet.add(c);
+  }
   const causes = [...causeSet];
 
   const requiresHumanConfirmation =

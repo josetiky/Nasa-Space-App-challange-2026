@@ -15,9 +15,17 @@ import { twoCorridorField } from "@/core/trek/costmap/synthetic";
 import {
   createSession,
   dispatch as dispatchSession,
+  setHuellaReplay,
+  setMarsEnv,
   tick as tickSession,
+  updateLive,
+  type LiveConfig,
+  type LivePatch,
   type TrekSessionState,
 } from "@/core/trek/sim/session";
+import { DEFAULT_CREW } from "@/core/trek/health/liveSuit";
+import type { MarsEnvSnapshot } from "@/core/trek/env/marsEnv";
+import type { HuellaReplayTrace } from "@/core/trek/health/huellaReplay";
 import { TREK_SCENARIOS } from "@/core/trek/sim/scenarios";
 import { getTrekSite, type SiteManifest, type TrekSiteInfo } from "@/services/trek/sites";
 import type { HeightGrid } from "@/core/science/routing";
@@ -78,6 +86,15 @@ export type TrekStoreAction =
   | { readonly type: "acceptProposedRoute" }
   | { readonly type: "clearStorms" }
   | { readonly type: "runScenarioStep"; readonly scenarioId: string }
+  /**
+   * Fuente de telemetría: caminata HUELLA de "metricas de vida" (reinicia el reloj a T+0 salvo con el
+   * candado humano activo) o null para volver al generador determinista.
+   */
+  | { readonly type: "setHuellaReplay"; readonly trace: HuellaReplayTrace | null }
+  /** Misión individual: parámetros del astronauta, fallas en el camino y protocolo (liveSuit.ts). */
+  | { readonly type: "updateLive"; readonly patch: LivePatch }
+  /** Entorno de Marte (reloj real + REMS + DONKI) o null para volver a los valores fijos. */
+  | { readonly type: "setMarsEnv"; readonly env: MarsEnvSnapshot | null }
   | { readonly type: "resetSession" };
 
 function createInitialStoreState(): TrekStoreState {
@@ -120,6 +137,13 @@ function createInitialStoreState(): TrekStoreState {
 }
 
 export const initialTrekState: TrekStoreState = createInitialStoreState();
+
+/** Configuración del astronauta en vivo a conservar al recrear la sesión (el estado físico se reinicia). */
+function liveConfigOf(s: TrekSessionState): LiveConfig | null {
+  return s.live
+    ? { params: s.live.params, faults: s.live.faults, protocol: s.live.protocol }
+    : null;
+}
 
 /**
  * Candado de confirmación humana (ASTRONAUT_HEALTH_STATE_MACHINE): mientras la FSM lo exige,
@@ -169,11 +193,15 @@ export function trekReducer(state: TrekStoreState, action: TrekStoreAction): Tre
         terrain,
         origin: action.site.defaultOrigin,
         goal: action.site.defaultGoal,
+        stops: action.site.defaultStops,
         shelters: action.site.shelters,
         missionProfile: state.session.missionProfile,
         weightProfile: state.session.weightProfile,
         customWeights: state.session.customWeights,
         vehicle: state.session.vehicle,
+        huellaReplay: state.session.huellaReplay,
+        live: liveConfigOf(state.session),
+        env: state.session.env,
       });
       return {
         ...state,
@@ -220,11 +248,19 @@ export function trekReducer(state: TrekStoreState, action: TrekStoreAction): Tre
         terrain: state.session.terrain,
         origin: state.session.origin,
         goal: state.session.goal,
+        stops: state.session.stops,
         shelters: state.session.shelters,
         missionProfile: action.profile,
         weightProfile: state.session.weightProfile,
         customWeights: state.session.customWeights,
         vehicle,
+        huellaReplay: state.session.huellaReplay,
+        // La misión individual trae al astronauta en vivo con parámetros y fallas editables
+        live:
+          action.profile === "solo"
+            ? (liveConfigOf(state.session) ?? { params: DEFAULT_CREW })
+            : null,
+        env: state.session.env,
       });
       return { ...state, session: nextSession };
     }
@@ -299,11 +335,15 @@ export function trekReducer(state: TrekStoreState, action: TrekStoreAction): Tre
         terrain: state.session.terrain,
         origin: state.siteInfo.defaultOrigin,
         goal: state.siteInfo.defaultGoal,
+        stops: state.siteInfo.defaultStops,
         shelters: state.siteInfo.shelters,
         missionProfile: state.session.missionProfile,
         weightProfile: state.session.weightProfile,
         customWeights: state.session.customWeights,
         vehicle: state.session.vehicle,
+        huellaReplay: state.session.huellaReplay,
+        live: liveConfigOf(state.session),
+        env: state.session.env,
       });
       return {
         ...state,
@@ -311,6 +351,41 @@ export function trekReducer(state: TrekStoreState, action: TrekStoreAction): Tre
         scenarioStepIdx: 0,
         session: nextSession,
       };
+    }
+
+    case "setMarsEnv":
+      return { ...state, session: setMarsEnv(state.session, action.env) };
+
+    case "updateLive": {
+      if (!state.session.live) return state;
+      let session = updateLive(state.session, action.patch);
+      // "Todo nominal" también apaga un evento solar simulado
+      if (action.patch.nominal && session.sepAlertActive) {
+        session = dispatchSession(session, { kind: "sep-alert", active: false, simulated: true });
+      }
+      return { ...state, session };
+    }
+
+    case "setHuellaReplay": {
+      if (!action.trace || isHumanLockActive(state)) {
+        // Volver al generador, o cambiar de caminata con el candado puesto: sin recrear la sesión
+        return { ...state, session: setHuellaReplay(state.session, action.trace) };
+      }
+      const nextSession = createSession({
+        terrain: state.session.terrain,
+        origin: state.session.origin,
+        goal: state.session.goal,
+        stops: state.session.stops,
+        shelters: state.session.shelters,
+        missionProfile: state.session.missionProfile,
+        weightProfile: state.session.weightProfile,
+        customWeights: state.session.customWeights,
+        vehicle: state.session.vehicle,
+        huellaReplay: action.trace,
+        live: liveConfigOf(state.session),
+        env: state.session.env,
+      });
+      return { ...state, activeScenarioId: null, scenarioStepIdx: 0, session: nextSession };
     }
 
     default:

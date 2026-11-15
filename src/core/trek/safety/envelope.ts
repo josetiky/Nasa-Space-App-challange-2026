@@ -198,6 +198,11 @@ export function composeEnvelope(
     minConfidence,
     speedFactor,
     strainFactor: Math.max(1, directive.strainFactor),
+    capacityFactor: Math.max(0.3, Math.min(1, directive.capacityFactor ?? 1)),
+    comfortSlopeDeg:
+      directive.comfortSlopeDeg !== undefined && Number.isFinite(directive.comfortSlopeDeg)
+        ? Math.max(0, directive.comfortSlopeDeg)
+        : Number.POSITIVE_INFINITY,
     weightMultipliers: { ...directive.weightMultipliers },
     goalPolicy,
     shelters: snapshot.dynamic.shelters,

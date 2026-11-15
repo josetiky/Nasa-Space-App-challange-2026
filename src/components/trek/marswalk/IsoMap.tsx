@@ -1,13 +1,22 @@
 /**
  * MarsWalk · Plano isométrico de la pestaña 03 de mars-space-rockstars (.iso), conectado al motor:
  * el plano es el ráster real del sitio con la ruta A* activa; etiquetas y astronauta van contrarrotados.
- * El astronauta se dibuja en `session.origin` (posición que usa el motor), nunca en una posición inventada.
+ * El astronauta se dibuja en `session.position` (posición que calcula el motor sobre la ruta), nunca en una posición inventada.
  */
 import { useEffect, useMemo, useRef } from "react";
 import { healthRank, type LocalPoint } from "@/core/trek/contracts";
 import { useTrek } from "@/state/trekStore";
 import { MW_TEXTS } from "./i18n";
-import { buildRaster, CANVAS_PX, drawScene, toUV } from "./mapRender";
+import {
+  buildThematic,
+  CANVAS_PX,
+  drawScene,
+  terrainLayers,
+  toUV,
+  useOrthophoto,
+} from "./mapRender";
+
+const PIXEL_RATIO = 1.5;
 
 export function IsoMap() {
   const state = useTrek();
@@ -30,16 +39,23 @@ export function IsoMap() {
     return () => ro.disconnect();
   }, []);
 
-  const raster = useMemo(
-    () => buildRaster(session, activeLayer, visibleOverlays.zones),
+  const ortho = useOrthophoto(state.loadedSiteId === siteInfo.id ? siteInfo.orthophotoUrl : null);
+  const terrainL = useMemo(
+    () => terrainLayers(session),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session.snapshot.terrain],
+  );
+  const thematic = useMemo(
+    () => buildThematic(session, activeLayer, visibleOverlays.zones),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [session.snapshot, activeLayer, visibleOverlays.zones, session.envelope.maxSlopeDeg],
   );
+  const base = useMemo(() => ({ ortho, terrain: terrainL, thematic }), [ortho, terrainL, thematic]);
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
-    drawScene(ctx, raster, session, {
+    drawScene(ctx, base, session, {
       zoom: 1,
       panX: 0,
       panY: 0,
@@ -47,8 +63,10 @@ export function IsoMap() {
       pois: siteInfo.pois,
       inspected: null,
       labels: false,
+      contours: true,
+      pixelRatio: PIXEL_RATIO,
     });
-  }, [raster, session, visibleOverlays, siteInfo.pois]);
+  }, [base, session, visibleOverlays, siteInfo.pois]);
 
   const pos = (p: LocalPoint) => {
     const [u, v] = toUV(session, p);
@@ -70,8 +88,8 @@ export function IsoMap() {
         <canvas
           ref={canvasRef}
           className="iso__svg"
-          width={CANVAS_PX}
-          height={CANVAS_PX}
+          width={CANVAS_PX * PIXEL_RATIO}
+          height={CANVAS_PX * PIXEL_RATIO}
           aria-hidden="true"
         />
         <div className="iso__labels">
@@ -106,7 +124,10 @@ export function IsoMap() {
               </span>
             ))}
         </div>
-        <div className={`iso__astro${offNominal ? " is-off" : ""}`} style={pos(session.origin)}>
+        <div
+          className={`iso__astro${offNominal || session.returning ? " is-off" : ""}`}
+          style={pos(session.position)}
+        >
           <span className="iso__astro-ring" />
           <span className="iso__astro-pin">
             <span className="iso__astro-tag t-label">EVA1</span>

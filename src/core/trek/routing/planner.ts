@@ -18,6 +18,7 @@ import { applyMultipliers, resolveBaseWeights, WEIGHT_PROFILES } from "../cost/w
 import { composeEnvelope, isSafetyEnvelope } from "../safety/envelope";
 import { createInitialResourceState } from "../resources/consumables";
 import { searchPath } from "./astar";
+import { planTour } from "./tour";
 import { inspectDirectPath, measureDirectLine, tracePolyline, validateRoute } from "./trace";
 
 export interface PlannerContext {
@@ -304,6 +305,10 @@ export function planRoute(
   snapshot: CostmapSnapshot,
   context: PlannerContext = {},
 ): RouteResult {
+  // Recorrido con paradas científicas: tramos A* encadenados (ver routing/tour.ts)
+  if (request.stops && request.stops.length > 0) {
+    return planTour(request, envelope, snapshot, context, planRoute);
+  }
   const t0 = performance.now();
 
   if (!isSafetyEnvelope(envelope) || envelope.costmapVersion !== snapshot.version) {

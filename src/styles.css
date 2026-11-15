@@ -637,3 +637,14 @@ html.dark .mission-hero-planet-image {
   border: 3px solid #fff;
   box-shadow: 0 0 0 4px rgb(79 195 220 / 0.35), 0 0 12px rgb(79 195 220 / 0.8);
 }
+
+/* M.I.Y.H. · Dentro de la ventana flotante de "Referencias y recursos" (iframe) la página se
+   muestra sin la barra lateral, el encabezado ni el pie del sitio. */
+html.embedded .app-aside,
+html.embedded .app-header,
+html.embedded .app-footer {
+  display: none !important;
+}
+html.embedded .app-shell {
+  padding-left: 0 !important;
+}

@@ -2,10 +2,13 @@
  * M.I.Y.H. · Pestañas 01 Inicio, 04 Misiones y 05 Proyecto, portadas de tabs/01-inicio, tabs/04-misiones
  * y tabs/05-proyecto de mars-space-rockstars (mismo HTML/CSS, lógica de carrusel reescrita en React).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { TrekLang } from "../i18n";
 import { MISSIONS } from "./missions";
+
+// three.js solo se descarga al abrir una ficha de misión
+const MissionTerrain3D = lazy(() => import("./MissionTerrain3D"));
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -24,10 +27,13 @@ export function InicioTab({
   lang,
   active,
   onStartTour,
+  onOpenTopo,
 }: {
   lang: TrekLang;
   active: boolean;
   onStartTour: () => void;
+  /** Abre el simulador topográfico (Unity WebGL) en una ventana flotante. */
+  onOpenTopo: () => void;
 }) {
   const [run, setRun] = useState(0);
   const chars = useMemo(() => {
@@ -112,6 +118,28 @@ export function InicioTab({
               <path d="M2.5 2.5v3h3" />
             </svg>
           </button>
+          <button
+            type="button"
+            className="inicio__topo"
+            onClick={onOpenTopo}
+            aria-haspopup="dialog"
+          >
+            <span className="inicio__topoico" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <path d="M5 38 17 18l8 11 6-8 12 17Z" />
+                <path d="M12 38c4-3 8-3 12 0s8 3 12 0" />
+              </svg>
+            </span>
+            <span className="inicio__topotxt">
+              <b>{lang === "es" ? "Explora" : "Explore"}</b>
+              {lang === "es"
+                ? "nuestro simulador topográfico de Marte"
+                : "our Mars topographic simulator"}
+            </span>
+            <svg className="inicio__topoarrow" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
+          </button>
         </div>
       </div>
       <p className="inicio__hint t-label inicio__reveal">
@@ -132,10 +160,16 @@ export function MissionsTab({
   lang,
   active,
   onOpen,
+  onExplore,
+  onOpenTopo,
 }: {
   lang: TrekLang;
   active: boolean;
   onOpen: (index: number) => void;
+  /** Abre la ficha directamente en el visor del terreno 3D. */
+  onExplore: (index: number) => void;
+  /** Abre el simulador topográfico (Unity WebGL) en una ventana flotante. */
+  onOpenTopo: () => void;
 }) {
   const [pos, setPos] = useState(7); // empieza en Perseverance, como el PDF de diseño
   const [vw, setVw] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
@@ -408,9 +442,38 @@ export function MissionsTab({
         </p>
         <h2 className="mis__name t-title">{m.name}</h2>
         <p className="mis__desc">{mt.short}</p>
-        <button type="button" className="btn btn--ghost mis__open" onClick={() => onOpen(current)}>
-          {lang === "es" ? "Abrir ficha completa" : "Open full profile"}
-        </button>
+        <div className="mis__actions">
+          <button
+            type="button"
+            className="btn btn--ghost mis__open"
+            onClick={() => onOpen(current)}
+          >
+            {lang === "es" ? "Abrir ficha completa" : "Open full profile"}
+          </button>
+          <button
+            type="button"
+            className="btn btn--primary mis__open"
+            onClick={() => onExplore(current)}
+          >
+            {lang === "es" ? "Explorar terreno 3D" : "Explore 3D terrain"}
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost mis__open mis__topo"
+            onClick={onOpenTopo}
+            aria-haspopup="dialog"
+            title={
+              lang === "es"
+                ? "Explora nuestro simulador topográfico de Marte"
+                : "Explore our Mars topographic simulator"
+            }
+          >
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M5 38 17 18l8 11 6-8 12 17Z" />
+            </svg>
+            {lang === "es" ? "Simulador topográfico" : "Topographic simulator"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -420,18 +483,26 @@ export function MissionSheet({
   index,
   lang,
   onClose,
+  startExploring = false,
 }: {
   index: number;
   lang: TrekLang;
   onClose: () => void;
+  /** Abre la ficha con el terreno 3D ya ampliado (botón "Explorar" del carrusel). */
+  startExploring?: boolean;
 }) {
   const m = MISSIONS[index]!;
   const mt = m.text[lang];
   const headRef = useRef<HTMLHeadingElement | null>(null);
+  const [exploring, setExploring] = useState(startExploring);
+  const exploringRef = useRef(exploring);
+  exploringRef.current = exploring;
   useEffect(() => {
     headRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (exploringRef.current) setExploring(false);
+      else onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -457,7 +528,7 @@ export function MissionSheet({
             <path d="M4 4l8 8M12 4l-8 8" />
           </svg>
         </button>
-        <div className="mis-sheet">
+        <div className="mis-sheet" data-exploring={exploring ? "true" : undefined}>
           <div className="mis-sheet__media">
             <img
               src={m.img}
@@ -486,6 +557,16 @@ export function MissionSheet({
               {cell(es ? "Fin de misión" : "Mission end", mt.end)}
               {cell(es ? "Lugar" : "Site", mt.site)}
             </dl>
+            <Suspense fallback={null}>
+              <MissionTerrain3D
+                missionId={m.id}
+                missionName={m.name}
+                lang={lang}
+                expanded={exploring}
+                onToggleExpanded={() => setExploring((v) => !v)}
+                onLeave={onClose}
+              />
+            </Suspense>
             <div>
               <p className="t-label" style={{ marginBottom: 12 }}>
                 {es ? "Logros clave" : "Key achievements"}
@@ -570,13 +651,38 @@ const TEAM: ReadonlyArray<{
   },
 ];
 
-export function ProjectTab({ lang, classicLink }: { lang: TrekLang; classicLink?: ReactNode }) {
+const PJ_FACTS: ReadonlyArray<{ n: string; es: string; en: string }> = [
+  {
+    n: "A*",
+    es: "Rutas seguras, con el porqué de cada desvío",
+    en: "Safe routes, with the why of every detour",
+  },
+  { n: "4", es: "Sitios reales del cráter Gale en 3D", en: "Real Gale crater sites in 3D" },
+  {
+    n: String(MISSIONS.length),
+    es: "Misiones a Marte con ficha y terreno",
+    en: "Mars missions with profile and terrain",
+  },
+  { n: "5", es: "Estados de salud del astronauta", en: "Astronaut health states" },
+];
+
+export function ProjectTab({
+  lang,
+  classicLink,
+  onOpenTopo,
+  onOpenSources,
+}: {
+  lang: TrekLang;
+  classicLink?: ReactNode;
+  onOpenTopo: () => void;
+  onOpenSources: () => void;
+}) {
   const es = lang === "es";
   return (
     <div className="pj" data-scroll-lock>
       <header className="pj__head">
         <p className="t-label" data-in>
-          <b>05</b> / {es ? "Proyecto" : "Project"}
+          <b>06</b> / {es ? "Proyecto" : "Project"}
         </p>
         <h2 className="pj__title t-title" data-in>
           {es ? "La tripulación" : "The crew"}
@@ -626,6 +732,30 @@ export function ProjectTab({ lang, classicLink }: { lang: TrekLang; classicLink?
             ? "M.I.Y.H. — Mars In Your Hands — es nuestra respuesta al reto Martian Map: ¿cómo debería ser un mapa para las primeras personas que exploren Marte a pie? Partimos de mallas de terreno reales del cráter Gale (Curiosity) y las convertimos en un mapa que un astronauta puede usar. MarsWalk planifica la ruta con A* dentro de una envolvente de seguridad (pendiente, zonas, confianza científica, consumibles) y explica por qué no va en línea recta; la simulación sigue a un tripulante con telemetría HUELLA simulada y una máquina de estados de salud que exige confirmación humana en estados críticos."
             : "M.I.Y.H. — Mars In Your Hands — is our answer to the Martian Map challenge: what should a map look like for the first people who explore Mars on foot? We start from real terrain meshes of Gale crater (Curiosity) and turn them into a map an astronaut can actually use. MarsWalk plans the route with A* inside a safety envelope (slope, zones, scientific confidence, consumables) and explains why it doesn't go straight; the simulation follows a crew member with simulated HUELLA telemetry and a health state machine that requires human confirmation in critical states."}
         </p>
+        <ul
+          className="pj__facts"
+          aria-label={es ? "El proyecto en números" : "The project in numbers"}
+        >
+          {PJ_FACTS.map((f) => (
+            <li key={f.n + f.en}>
+              <b>{f.n}</b>
+              <span>{es ? f.es : f.en}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="pj__actions">
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={onOpenTopo}
+            aria-haspopup="dialog"
+          >
+            {es ? "Abrir el simulador topográfico" : "Open the topographic simulator"}
+          </button>
+          <button type="button" className="btn btn--ghost" onClick={onOpenSources}>
+            {es ? "Ver fuentes y datos" : "See sources and data"}
+          </button>
+        </div>
       </section>
 
       <footer className="pj__foot" data-in>

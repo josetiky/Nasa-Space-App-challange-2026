@@ -1,0 +1,21 @@
+{
+  "siteId": "marias_pass",
+  "file": "/data/trek/gale/marias_pass/orthophoto.jpg",
+  "widthPx": 2048,
+  "heightPx": 2048,
+  "extentM": {
+    "x0": -64.0,
+    "z0": -64.0,
+    "x1": 64.0,
+    "z1": 64.0
+  },
+  "metersPerPx": 0.0625,
+  "orientation": "north-up: fila 0 = z máx (+Z arriba), columna 0 = x mín",
+  "coveragePct": 100.0,
+  "method": "Proyección cenital de las mallas TYPE_TILE texturizadas (superficie más alta), supermuestreo 2× + Lanczos",
+  "source": "NASA/JPL-Caltech MSL Curiosity imagery and stereo meshes via Access Mars (marias_pass)",
+  "notes": "Zonas en color: imágenes del rover proyectadas sobre la malla. Zonas en escala de grises: relleno que trae Access Mars fuera del campo de visión del rover (sin color real). Radios estirados cerca del borde = textura del rover vista a ángulo rasante.",
+  "license": "Apache-2.0 (Access Mars · Google Creative Lab) / NASA-JPL public domain imagery",
+  "dataType": "REAL",
+  "generatedAt": "2026-11-15T00:00:00Z"
+}

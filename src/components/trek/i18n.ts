@@ -73,7 +73,7 @@ export const TREK_TEXTS: Readonly<Record<TrekLang, TrekTranslations>> = {
     },
     layersTitle: "Capas Científicas y Costmap",
     layers: {
-      elevation: "L01 · Elevación + Sombreado (m)",
+      elevation: "L01 · Ortofoto + relieve + curvas",
       slope: "L02 · Pendiente Topográfica (°)",
       zones: "L15 · Clasificación de Zonas (Z0–Z5)",
       confidence: "L12 · Confianza Científica (K1–K5)",
@@ -148,7 +148,7 @@ export const TREK_TEXTS: Readonly<Record<TrekLang, TrekTranslations>> = {
     },
     layersTitle: "Scientific & Costmap Layers",
     layers: {
-      elevation: "L01 · Elevation + Hillshade (m)",
+      elevation: "L01 · Orthophoto + relief + contours",
       slope: "L02 · Terrain Slope (°)",
       zones: "L15 · Zone Classification (Z0–Z5)",
       confidence: "L12 · Scientific Confidence (K1–K5)",

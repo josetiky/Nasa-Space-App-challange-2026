@@ -154,6 +154,62 @@ export async function loadSepEpisodes(): Promise<{ episodes: DonkiEpisode[]; ori
   }
 }
 
+/**
+ * Episodios SEP recientes (ventana corta, por defecto 30 días) para saber si hay una alerta ahora.
+ * Orden: proxy del servidor (usa NASA_API_KEY si existe) → api.nasa.gov directo con DEMO_KEY.
+ * La respuesta buena se guarda 3 h en localStorage porque DEMO_KEY admite ~30 peticiones/hora por IP.
+ */
+export async function loadRecentSep(days = 30): Promise<{ eventsIso: string[]; origin: Origin; period: string }> {
+  const cacheKey = `miyh:donki-recent:${days}`;
+  const cached = readCache<{ eventsIso: string[]; period: string; at: number }>(cacheKey);
+  if (cached && Date.now() - cached.at < 3 * 3600e3) return { eventsIso: cached.eventsIso, period: cached.period, origin: "live" };
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 864e5);
+  const day = (d: Date) => d.toISOString().slice(0, 10);
+  const period = `${day(start)} → ${day(end)}`;
+  const result = await firstAvailable<{ eventsIso: string[]; period: string }, Origin>([
+    {
+      origin: "proxy",
+      load: async () => {
+        const r = await fetchJson<{ events?: string[]; period: string }>(`/api/nasa/donki?days=${days}`, { timeoutMs: 15000 });
+        if (!Array.isArray(r.events)) throw new Error("proxy without events");
+        return { eventsIso: r.events, period: r.period };
+      },
+    },
+    {
+      origin: "live",
+      load: async () => {
+        const raw = await fetchJson<Array<{ eventTime?: string }>>(`https://api.nasa.gov/DONKI/SEP?startDate=${day(start)}&endDate=${day(end)}&api_key=DEMO_KEY`, { timeoutMs: 15000 });
+        return { eventsIso: (Array.isArray(raw) ? raw : []).map((r) => r.eventTime ?? "").filter((t) => t.length > 0), period };
+      },
+    },
+  ]);
+  writeCache(cacheKey, { ...result.value, at: Date.now() });
+  return { ...result.value, origin: result.origin };
+}
+
+function readCache<T>(key: string): T | null {
+  try {
+    const raw = typeof localStorage === "undefined" ? null : localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(key: string, value: unknown): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* almacenamiento no disponible: sin caché */
+  }
+}
+
+/** Fechas ISO de los episodios DONKI 2024 incluidos con el simulador Sol-by-Sol (registros reales). */
+export function bundledSepIso2024(): string[] {
+  return DONKI_2024_EPISODES.map(([doy]) => new Date(Date.UTC(2024, 0, doy, 12)).toISOString());
+}
+
 /* ----------------------------- NASA Images ------------------------------ */
 
 export interface NasaImage {

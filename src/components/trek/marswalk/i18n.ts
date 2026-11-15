@@ -12,6 +12,10 @@ const es = {
     "SIMULATED · Telemetría de traje, tormentas, SEP y fallas inyectadas son simuladas. No es telemetría real de la NASA.",
   simBandNominal:
     "SIMULATED · Telemetría de traje simulada (generador determinista HUELLA). No es telemetría real de la NASA.",
+  simBandReplay:
+    "SIMULATED · Telemetría de una caminata sintética HUELLA (metricas de vida, CSV). No es telemetría real de la NASA.",
+  simBandLive:
+    "SIMULATED · Astronauta en vivo (modelo de simulador_huella con tus parámetros y fallas). No es telemetría real de la NASA.",
   classicView: "Vista clásica",
   workspace: "Espacio de trabajo",
   chainTitle: "Cadena de decisión",
@@ -148,6 +152,10 @@ const en: MarsWalkTexts = {
     "SIMULATED · Suit telemetry, storms, SEP and injected failures are simulated. This is not real NASA telemetry.",
   simBandNominal:
     "SIMULATED · Suit telemetry is simulated (deterministic HUELLA generator). This is not real NASA telemetry.",
+  simBandReplay:
+    "SIMULATED · Telemetry from a synthetic HUELLA walk (metricas de vida, CSV). This is not real NASA telemetry.",
+  simBandLive:
+    "SIMULATED · Live astronaut (simulador_huella model with your parameters and faults). This is not real NASA telemetry.",
   classicView: "Classic view",
   workspace: "Workspace",
   chainTitle: "Decision chain",

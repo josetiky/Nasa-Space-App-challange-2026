@@ -165,6 +165,8 @@ export function tracePolyline(
           zone,
           speedFactor: envelope.speedFactor,
           strainFactor: envelope.strainFactor,
+          capacityFactor: envelope.capacityFactor,
+          comfortSlopeDeg: envelope.comfortSlopeDeg,
           payloadKg: resources?.payloadKg ?? TREK_PARAMS.refEquipmentKg.value,
           locomotion: DEFAULT_LOCOMOTION,
         },

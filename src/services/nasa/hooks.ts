@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { checkSource, loadMolaGrid, loadRems, loadSepEpisodes, loadTraverse, searchNasaImages, type TraverseId } from "./adapters";
+import { checkSource, loadMolaGrid, loadRecentSep, loadRems, loadSepEpisodes, loadTraverse, searchNasaImages, type TraverseId } from "./adapters";
 
 const HOUR = 3600_000;
 
@@ -17,6 +17,11 @@ export function useTraverse(id: TraverseId, enabled = true) {
 
 export function useSepEpisodes() {
   return useQuery({ queryKey: ["nasa", "donki"], queryFn: loadSepEpisodes, staleTime: 12 * HOUR, retry: 0 });
+}
+
+/** Eventos SEP de DONKI de los últimos 30 días (para saber si hay una alerta ahora). */
+export function useRecentSep() {
+  return useQuery({ queryKey: ["nasa", "donki-recent"], queryFn: () => loadRecentSep(30), staleTime: HOUR, retry: 0 });
 }
 
 export function useNasaImages(query: string | null, limit = 8) {

@@ -6,6 +6,23 @@ import { createInitialFsmState, stepFsm } from "./fsm";
 import { composeTeamDirective, directiveFor } from "./directive";
 
 describe("Mars Trek fatigue, FSM & navigation directive (Task 8)", () => {
+  it("un enclavamiento CRITICAL conserva la causa que lo disparó aunque el disparador se apague", () => {
+    let fsm = createInitialFsmState("EVA1");
+    fsm = stepFsm(fsm, {
+      missionTimeS: 10,
+      huellaLevel: "SUPERVIVENCIA",
+      activeRulesCountAtSupervivencia: 1,
+      causes: ["radiacion"],
+    });
+    expect(fsm.state).toBe("CRITICAL");
+    expect(directiveFor(fsm).protocol).toBe("sep-shelter");
+    // El evento SEP termina: sin disparadores, pero el latch exige confirmación humana
+    fsm = stepFsm(fsm, { missionTimeS: 20, huellaLevel: "NORMAL" });
+    expect(fsm.state).toBe("CRITICAL");
+    expect(fsm.causes).toContain("radiacion");
+    expect(directiveFor(fsm).protocol).toBe("sep-shelter");
+  });
+
   it("enters FATIGUE when F >= 0.6 and exits only when F <= 0.4 (hysteresis)", () => {
     let f = 0;
     for (let t = 0; t < 300; t += 1) {

@@ -15,7 +15,7 @@
  * alerts.js → fsm + replanLog · "viabilidad" → margen de regreso · jezero-base.jpg → ráster de Gale ·
  * puente Unity → dispatchTrek(...).
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { TREK_SCENARIOS } from "@/core/trek/sim/scenarios";
@@ -25,28 +25,43 @@ import { DECK_TEXTS } from "./deckText";
 import { InicioTab, MissionSheet, MissionsTab, ProjectTab } from "./homeTabs";
 import { MW_TEXTS } from "./i18n";
 import { IntroOverlay } from "./IntroOverlay";
-import { MapsMenu } from "./MapsMenu";
+import { LandingAudio } from "./landing/landingAudio";
+import { ReadyToLand } from "./landing/ReadyToLand";
+import { WarpTransition } from "./landing/WarpTransition";
+import { evaluateHistorical } from "./historicalBus";
+import { MarsEnvLoader, MarsEnvPanel } from "./MarsEnvPanel";
 import { MarsGlobe, type GlobePreset } from "./MarsGlobe";
-import {
-  DeckSheet,
-  HealthTab,
-  HumanConfirmModal,
-  PlannerTab,
-  SimTab,
-  type Speed,
-  WhyTab,
-} from "./panels";
+import { DeckSheet, HealthTab, HumanConfirmModal, type Speed, WhyTab } from "./panels";
+import { PlannerConsoleTab } from "./plannerConsole";
+import { ResourcesTab, TOPO_SIM_TOOL, ToolWindow } from "./resourcesTab";
+import { SimConsoleTab } from "./simConsole";
+import { walkComplete } from "@/core/trek/sim/session";
 import "./marswalk.css";
 
+// La escena 3D del aterrizaje solo se descarga cuando alguien presiona "Aterrizar".
+const LandingSequence = lazy(() => import("./landing/LandingSequence"));
+
 const HR_BUFFER = 120;
-export const DECK_TAB_IDS = ["inicio", "marswalk", "simulacion", "misiones", "proyecto"] as const;
+export const DECK_TAB_IDS = [
+  "inicio",
+  "marswalk",
+  "simulacion",
+  "misiones",
+  "recursos",
+  "proyecto",
+] as const;
 export type DeckTabId = (typeof DECK_TAB_IDS)[number];
 const TAB_IDS = DECK_TAB_IDS;
 /** Preset de Marte por pestaña (shared/js/scene/presets.js del front). */
-const GLOBE: readonly GlobePreset[] = ["hero", "corner", "corner", "hidden", "behind"];
+const GLOBE: readonly GlobePreset[] = ["hero", "corner", "corner", "hidden", "hidden", "behind"];
 const WHEEL_THRESHOLD = 60;
 const WHEEL_LOCK_MS = 900;
 const SOUND_KEY = "miyh.sound";
+/**
+ * La intro, el salto, "¿Listo para aterrizar?" y el aterrizaje tienen audio en inglés,
+ * así que su texto también va siempre en inglés (no cambia con el botón ES/EN).
+ */
+const CINEMATIC_LANG = "en" as const;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 function tabFromHash(fallback: number): number {
@@ -91,9 +106,19 @@ export default function MarsWalkWorkspace({
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(15);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [sheet, setSheet] = useState<"why" | "health" | null>(null);
+  const [sheet, setSheet] = useState<"why" | "health" | "env" | null>(null);
   const [missionOpen, setMissionOpen] = useState<number | null>(null);
+  const [missionExplore, setMissionExplore] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
+  const [warpOpen, setWarpOpen] = useState(false);
+  const [resWindow, setResWindow] = useState(false);
+  const [topoOpen, setTopoOpen] = useState(false);
+  const openTopo = useCallback(() => setTopoOpen(true), []);
+  const closeTopo = useCallback(() => setTopoOpen(false), []);
+  // Después de la intro: null → "ready" (¿Listo para aterrizar?) → "flying" (secuencia 3D) → planeador
+  const [landing, setLanding] = useState<null | "ready" | "flying">(null);
+  const [booting, setBooting] = useState(false);
+  const landingAudioRef = useRef<LandingAudio | null>(null);
   const [soundOn, setSoundOn] = useState(() => {
     try {
       return window.localStorage.getItem(SOUND_KEY) !== "0";
@@ -109,7 +134,15 @@ export default function MarsWalkWorkspace({
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   useEffect(() => setPortalTarget(document.body), []);
 
-  const overlayOpen = confirmOpen || sheet !== null || missionOpen !== null || introOpen;
+  const overlayOpen =
+    confirmOpen ||
+    sheet !== null ||
+    missionOpen !== null ||
+    introOpen ||
+    warpOpen ||
+    resWindow ||
+    topoOpen ||
+    landing !== null;
 
   const go = useCallback((i: number) => {
     const next = Math.max(0, Math.min(TAB_IDS.length - 1, i));
@@ -127,6 +160,11 @@ export default function MarsWalkWorkspace({
     const onHash = () => setTab((cur) => tabFromHash(cur));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  // La página siempre abre en inglés (regla de Space Apps); el botón ES/EN cambia el resto de la UI
+  useEffect(() => {
+    if (trekStore.getState().lang !== "en") dispatchTrek({ type: "setLang", lang: "en" });
   }, []);
 
   useEffect(() => {
@@ -236,9 +274,19 @@ export default function MarsWalkWorkspace({
   // Bucle de reproducción: 1 tick de simulación por segundo real
   useEffect(() => {
     if (!playing) return;
-    const id = window.setInterval(() => dispatchTrek({ type: "simTick", dtS: speed }), 1000);
+    const id = window.setInterval(() => {
+      dispatchTrek({ type: "simTick", dtS: speed });
+      // Incidentes automáticos según precedentes reales (historicalBus)
+      evaluateHistorical(speed);
+    }, 1000);
     return () => window.clearInterval(id);
   }, [playing, speed]);
+
+  // Fin de la EVA: de vuelta en el rover (o en el destino) sin paradas pendientes → se pausa el
+  // reloj para que el traje no siga gastando oxígeno con la caminata ya terminada.
+  useEffect(() => {
+    if (playing && walkComplete(session)) setPlaying(false);
+  }, [playing, session]);
 
   // Buffer de vista para la minigráfica de FC (no participa en ninguna decisión)
   useEffect(() => {
@@ -249,11 +297,11 @@ export default function MarsWalkWorkspace({
       setHrHistory((h) => [...h, v].slice(-HR_BUFFER));
   }, [session.latestTelemetryRow, session.clockS]);
 
-  // Al entrar en un estado que exige confirmación humana: pausar y abrir el candado
+  // Al entrar en un estado que exige confirmación humana se abre el candado, pero la caminata NO se
+  // pausa: el astronauta sigue avanzando por la ruta de regreso/refugio mientras el hábitat decide.
   const prevRequiresRef = useRef(fsm.requiresHumanConfirmation);
   useEffect(() => {
     if (fsm.requiresHumanConfirmation && !prevRequiresRef.current) {
-      setPlaying(false);
       setConfirmOpen(true);
     }
     prevRequiresRef.current = fsm.requiresHumanConfirmation;
@@ -303,13 +351,36 @@ export default function MarsWalkWorkspace({
   const closeMission = useCallback(() => setMissionOpen(null), []);
   const endIntro = useCallback(() => {
     setIntroOpen(false);
+    setLanding("ready");
+  }, []);
+  /** Clic en "Aterrizar": el audio se desbloquea dentro del gesto del usuario. */
+  const startLanding = useCallback(() => {
+    const audio = new LandingAudio();
+    audio.unlock(!soundOn);
+    landingAudioRef.current = audio;
+    setLanding("flying");
+  }, [soundOn]);
+  /** Fin o salto del aterrizaje → se enciende la consola del planeador. */
+  const finishLanding = useCallback(() => {
+    landingAudioRef.current?.dispose();
+    landingAudioRef.current = null;
+    setLanding(null);
     go(1);
+    setBooting(true);
+    window.setTimeout(() => setBooting(false), 1700);
   }, [go]);
   const critical = fsm.state === "CRITICAL" || fsm.state === "EMERGENCY";
   const dynamicEvents =
     session.storms.some((s) => s.active) ||
     session.sepAlertActive ||
     session.telemetry.incident !== "nominal";
+  const simNote = dynamicEvents
+    ? t.simBand
+    : session.huellaReplay
+      ? t.simBandReplay
+      : session.live
+        ? t.simBandLive
+        : t.simBandNominal;
   // La insignia SIMULATED se muestra en las pestañas con datos de misión (02 y 03) y siempre que haya eventos.
   const showSimBadge = tab === 1 || tab === 2 || dynamicEvents;
 
@@ -320,9 +391,10 @@ export default function MarsWalkWorkspace({
       key="i"
       lang={state.lang}
       active={tab === 0}
-      onStartTour={() => setIntroOpen(true)}
+      onStartTour={() => setWarpOpen(true)}
+      onOpenTopo={openTopo}
     />,
-    <PlannerTab
+    <PlannerConsoleTab
       key="p"
       onOpenWhy={() => setSheet("why")}
       onSend={() => {
@@ -330,7 +402,7 @@ export default function MarsWalkWorkspace({
         setPlaying(true);
       }}
     />,
-    <SimTab
+    <SimConsoleTab
       key="s"
       playing={playing}
       onTogglePlay={() => setPlaying((p) => !p)}
@@ -338,15 +410,44 @@ export default function MarsWalkWorkspace({
       onSpeed={setSpeed}
       hrHistory={hrHistory}
       onOpenHealth={() => setSheet("health")}
+      onOpenConfirm={() => setConfirmOpen(true)}
+      onOpenEnv={() => setSheet("env")}
+      onRunScenario={runScenario}
     />,
-    <MissionsTab key="m" lang={state.lang} active={tab === 3} onOpen={setMissionOpen} />,
-    <ProjectTab key="pj" lang={state.lang} classicLink={variantSwitch} />,
+    <MissionsTab
+      key="m"
+      lang={state.lang}
+      active={tab === 3}
+      onOpen={(i) => {
+        setMissionExplore(false);
+        setMissionOpen(i);
+      }}
+      onExplore={(i) => {
+        setMissionExplore(true);
+        setMissionOpen(i);
+      }}
+      onOpenTopo={openTopo}
+    />,
+    <ResourcesTab key="r" lang={state.lang} onWindowChange={setResWindow} />,
+    <ProjectTab
+      key="pj"
+      lang={state.lang}
+      classicLink={variantSwitch}
+      onOpenTopo={openTopo}
+      onOpenSources={() => go(4)}
+    />,
   ];
 
   return createPortal(
-    <div className="mw-ui mw-deck" ref={deckRef} data-tab={TAB_IDS[tab]}>
+    <div
+      className="mw-ui mw-deck"
+      ref={deckRef}
+      data-tab={TAB_IDS[tab]}
+      data-boot={booting ? "true" : undefined}
+    >
       <div className="mw-sky" aria-hidden="true" />
-      <MarsGlobe preset={introOpen ? "hidden" : GLOBE[tab]!} />
+      <MarsEnvLoader />
+      <MarsGlobe preset={introOpen || landing !== null ? "hidden" : GLOBE[tab]!} />
       <div className="vignette" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
 
@@ -366,15 +467,31 @@ export default function MarsWalkWorkspace({
       <div className="mw-topright">
         {/* Transparencia de simulación: visible en las pestañas con datos de misión y con eventos simulados */}
         {showSimBadge ? (
-          <span
-            className="chip chip--crit mw-simchip"
-            role="note"
-            title={dynamicEvents ? t.simBand : t.simBandNominal}
-          >
+          <span className="chip chip--crit mw-simchip" role="note" title={simNote}>
             <span className="chip__dot chip__dot--pulse" /> SIMULATED
           </span>
         ) : null}
-        <MapsMenu lang={state.lang} />
+        <button
+          type="button"
+          className="chip mw-maps__btn"
+          aria-current={TAB_IDS[tab] === "recursos" ? "page" : undefined}
+          onClick={() => go(TAB_IDS.indexOf("recursos"))}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          >
+            <path d="M2.5 2.5h4l1.5 1.5h5.5v9.5h-11Z" />
+            <path d="M5 8h6M5 10.5h4" />
+          </svg>
+          {state.lang === "es" ? "Referencias" : "References"}
+        </button>
         <div className="mw-lang" role="group" aria-label="Idioma / Language">
           {(["es", "en"] as const).map((l) => (
             <button
@@ -388,9 +505,7 @@ export default function MarsWalkWorkspace({
           ))}
         </div>
       </div>
-      {showSimBadge ? (
-        <p className="mw-simnote t-label">{dynamicEvents ? t.simBand : t.simBandNominal}</p>
-      ) : null}
+      {showSimBadge ? <p className="mw-simnote t-label">{simNote}</p> : null}
 
       {critical ? (
         <button
@@ -497,15 +612,54 @@ export default function MarsWalkWorkspace({
           <WhyTab />
         </DeckSheet>
       ) : null}
+      {sheet === "env" ? (
+        <DeckSheet
+          label={state.lang === "es" ? "Entorno de Marte" : "Mars environment"}
+          onClose={closeSheet}
+        >
+          <MarsEnvPanel />
+        </DeckSheet>
+      ) : null}
       {sheet === "health" ? (
         <DeckSheet label={t.consoleTitle} onClose={closeSheet}>
           <HealthTab onRunScenario={runScenario} onOpenConfirm={() => setConfirmOpen(true)} />
         </DeckSheet>
       ) : null}
       {missionOpen !== null ? (
-        <MissionSheet index={missionOpen} lang={state.lang} onClose={closeMission} />
+        <MissionSheet
+          key={`${missionOpen}-${missionExplore}`}
+          index={missionOpen}
+          lang={state.lang}
+          onClose={closeMission}
+          startExploring={missionExplore}
+        />
       ) : null}
-      {introOpen ? <IntroOverlay lang={state.lang} muted={!soundOn} onDone={endIntro} /> : null}
+      {topoOpen ? <ToolWindow tool={TOPO_SIM_TOOL} lang={state.lang} onClose={closeTopo} /> : null}
+      {warpOpen ? (
+        <WarpTransition
+          lang={CINEMATIC_LANG}
+          muted={!soundOn}
+          onDone={() => {
+            setWarpOpen(false);
+            setIntroOpen(true);
+          }}
+        />
+      ) : null}
+      {introOpen ? <IntroOverlay lang={CINEMATIC_LANG} muted={!soundOn} onDone={endIntro} /> : null}
+      {landing === "ready" ? (
+        <ReadyToLand lang={CINEMATIC_LANG} onLand={startLanding} onSkip={finishLanding} />
+      ) : null}
+      {landing === "flying" && landingAudioRef.current ? (
+        <Suspense fallback={<div className="ld" aria-busy="true" />}>
+          <LandingSequence
+            lang={CINEMATIC_LANG}
+            audio={landingAudioRef.current}
+            soundOn={soundOn}
+            onToggleSound={() => setSoundOn((v) => !v)}
+            onDone={finishLanding}
+          />
+        </Suspense>
+      ) : null}
       {confirmOpen && fsm.requiresHumanConfirmation ? (
         <HumanConfirmModal onClose={closeConfirm} />
       ) : null}
